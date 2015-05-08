@@ -105,7 +105,7 @@ var fn = _interopRequire(require("./types/fn"));
 
 err = err("[ri/core]");
 log = log("[ri/core]");
-},{"./types/data":2,"./types/fn":3,"./types/text":4,"colors":5,"utilise/chainable":6,"utilise/emitterify":7,"utilise/err":8,"utilise/header":10,"utilise/is":11,"utilise/log":13,"utilise/noop":33,"utilise/objectify":34,"utilise/rebind":35,"utilise/values":36}],2:[function(require,module,exports){
+},{"./types/data":2,"./types/fn":3,"./types/text":4,"colors":5,"utilise/chainable":6,"utilise/emitterify":7,"utilise/err":8,"utilise/header":10,"utilise/is":11,"utilise/log":13,"utilise/noop":34,"utilise/objectify":35,"utilise/rebind":36,"utilise/values":37}],2:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -337,27 +337,36 @@ module.exports = function keys(o) {
 }
 },{}],25:[function(require,module,exports){
 var is = require('is')
+  , to = require('to')
 
 module.exports = function log(prefix){
   return function(d){
     is.arr(arguments[2]) && (arguments[2] = arguments[2].length)
-    var args = [].slice.call(arguments, 0)
+    var args = to.arr(arguments)
     args.unshift(''.grey ? prefix.grey : prefix)
     return console.log.apply(console, args), d
   }
 }
-},{"is":26}],26:[function(require,module,exports){
+},{"is":26,"to":27}],26:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
 },{"dup":20}],27:[function(require,module,exports){
-module.exports = function noop(){}
+module.exports = { 
+  arr : toArray
+}
+
+function toArray(d){
+  return Array.prototype.slice.call(d, 0)
+}
 },{}],28:[function(require,module,exports){
+module.exports = function noop(){}
+},{}],29:[function(require,module,exports){
 module.exports = function objectify(rows, by) {
   var o = {}, by = by || 'name'
   return rows.forEach(function(d){
     return o[d[by]] = d 
   }), o
 }
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = function(target, source) {
   var i = 1, n = arguments.length, method
   while (++i < n) target[method = arguments[i]] = rebind(target, source, source[method])
@@ -370,27 +379,27 @@ function rebind(target, source, method) {
     return value === source ? target : value
   }
 }
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var keys = require('keys')
   , base = require('base')
 
 module.exports = function values(o) {
   return !o ? [] : keys(o).map(base(o))
 }
-},{"base":31,"keys":32}],31:[function(require,module,exports){
+},{"base":32,"keys":33}],32:[function(require,module,exports){
 module.exports = function base(o) {
   return function (k) {
     return o[k]
   }
 }
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],33:[function(require,module,exports){
+},{"dup":24}],34:[function(require,module,exports){
 module.exports = require('noop')
-},{"noop":27}],34:[function(require,module,exports){
+},{"noop":28}],35:[function(require,module,exports){
 module.exports = require('objectify')
-},{"objectify":28}],35:[function(require,module,exports){
+},{"objectify":29}],36:[function(require,module,exports){
 module.exports = require('rebind')
-},{"rebind":29}],36:[function(require,module,exports){
+},{"rebind":30}],37:[function(require,module,exports){
 module.exports = require('values')
-},{"values":30}]},{},[1]);
+},{"values":31}]},{},[1]);
