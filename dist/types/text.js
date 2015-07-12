@@ -6,8 +6,10 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 module.exports = {
   header: "text/plain",
   check: function check(res) {
-    return is.str(res.body);
+    return !includes(".html")(res.name) && !includes(".css")(res.name) && is.str(res.body);
   }
 };
+
+var includes = _interopRequire(require("utilise/includes"));
 
 var is = _interopRequire(require("utilise/is"));

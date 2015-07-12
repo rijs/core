@@ -20,7 +20,7 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 module.exports = core;
 
 function core() {
-  log("creating core");
+  log("creating");
 
   var resources = {};
   ripple.resources = resources;
@@ -30,7 +30,7 @@ function core() {
   return emitterify(ripple);
 
   function ripple(name, body, headers) {
-    return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+    return is.arr(name) ? name.map(ripple) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
   }
 }
 
@@ -41,11 +41,13 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
+    if (!name) return err("cannot register nameless resource");
     log("registering", name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers });
+
     if (!res) return (err("failed to register", name), false);
     ripple.resources[name] = res;
-    ripple.emit("change", ripple.resources[name]);
+    ripple.emit("change", [ripple.resources[name]]);
     return ripple.resources[name].body;
   };
 }
@@ -54,14 +56,13 @@ function normalise(ripple) {
   return function (res) {
     if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand", res), false);
-    inflate(ripple)(res);
-    return res;
+    return parse(ripple)(res);
   };
 }
 
-function inflate(ripple) {
+function parse(ripple) {
   return function (res) {
-    (ripple.types[header("content-type")(res)].inflate || noop)(res);
+    return ((ripple.types[header("content-type")(res)] || {}).parse || identity)(res);
   };
 }
 
@@ -72,24 +73,24 @@ function contentType(res) {
 }
 
 function types() {
-  return objectify([text, fn, data], "header");
+  return objectify([text], "header");
 }
 
-require("colors");
-
 var emitterify = _interopRequire(require("utilise/emitterify"));
+
+var colorfill = _interopRequire(require("utilise/colorfill"));
 
 var chainable = _interopRequire(require("utilise/chainable"));
 
 var objectify = _interopRequire(require("utilise/objectify"));
+
+var identity = _interopRequire(require("utilise/identity"));
 
 var rebind = _interopRequire(require("utilise/rebind"));
 
 var header = _interopRequire(require("utilise/header"));
 
 var values = _interopRequire(require("utilise/values"));
-
-var noop = _interopRequire(require("utilise/noop"));
 
 var err = _interopRequire(require("utilise/err"));
 
@@ -99,72 +100,9 @@ var is = _interopRequire(require("utilise/is"));
 
 var text = _interopRequire(require("./types/text"));
 
-var data = _interopRequire(require("./types/data"));
-
-var fn = _interopRequire(require("./types/fn"));
-
 err = err("[ri/core]");
 log = log("[ri/core]");
-},{"./types/data":2,"./types/fn":3,"./types/text":4,"colors":5,"utilise/chainable":6,"utilise/emitterify":7,"utilise/err":8,"utilise/header":10,"utilise/is":11,"utilise/log":13,"utilise/noop":34,"utilise/objectify":35,"utilise/rebind":36,"utilise/values":37}],2:[function(require,module,exports){
-"use strict";
-
-/* istanbul ignore next */
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-module.exports = {
-  header: "application/data",
-  check: function check(res) {
-    return true;
-  },
-  inflate: function inflate(res) {
-    !res.body && (res.body = []);
-    emitterify(res.body);
-    res.headers = {
-      "content-type": "application/data"
-      // , 'content-location': res.headers['content-location'] || res.headers['table'] || res.name
-      // , 'proxy-to'        : res.headers['proxy-to'] || res.headers['to']
-      // , 'proxy-from'      : res.headers['proxy-from'] || res.headers['from']
-      // , 'version'         : res.headers['version']
-      // , 'max-versions'    : is.num(header('max-versions')(res)) ? header('max-versions')(res)
-      //                     : Infinity
-      // , 'cache-control'   : is.null(res.headers['cache']) ? 'no-store'
-      //                     : res.headers['cache-control'] || res.headers['cache']
-    }
-
-    // keys(res.headers)
-    //   .filter(k => !is.def(res.headers[k]))
-    //   .map(k => delete res.headers[k])
-    ;
-  }
-};
-
-var emitterify = _interopRequire(require("utilise/emitterify"));
-
-var header = _interopRequire(require("utilise/header"));
-
-var keys = _interopRequire(require("utilise/keys"));
-
-var is = _interopRequire(require("utilise/is"));
-},{"utilise/emitterify":7,"utilise/header":10,"utilise/is":11,"utilise/keys":12}],3:[function(require,module,exports){
-"use strict";
-
-/* istanbul ignore next */
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-module.exports = {
-  header: "application/javascript",
-  check: function check(res) {
-    return is.fn(res.body);
-  },
-  inflate: function inflate(res) {
-    res.body = fn(res.body);
-  }
-};
-
-var is = _interopRequire(require("utilise/is"));
-
-var fn = _interopRequire(require("utilise/fn"));
-},{"utilise/fn":9,"utilise/is":11}],4:[function(require,module,exports){
+},{"./types/text":2,"utilise/chainable":4,"utilise/colorfill":5,"utilise/emitterify":6,"utilise/err":7,"utilise/header":8,"utilise/identity":9,"utilise/is":11,"utilise/log":12,"utilise/objectify":64,"utilise/rebind":65,"utilise/values":66}],2:[function(require,module,exports){
 "use strict";
 
 /* istanbul ignore next */
@@ -173,109 +111,803 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 module.exports = {
   header: "text/plain",
   check: function check(res) {
-    return is.str(res.body);
+    return !includes(".html")(res.name) && !includes(".css")(res.name) && is.str(res.body);
   }
 };
 
-var is = _interopRequire(require("utilise/is"));
-},{"utilise/is":11}],5:[function(require,module,exports){
+var includes = _interopRequire(require("utilise/includes"));
 
-},{}],6:[function(require,module,exports){
+var is = _interopRequire(require("utilise/is"));
+},{"utilise/includes":10,"utilise/is":11}],3:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    draining = true;
+    var currentQueue;
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
+        }
+        len = queue.length;
+    }
+    draining = false;
+}
+process.nextTick = function (fun) {
+    queue.push(fun);
+    if (!draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],4:[function(require,module,exports){
 module.exports = require('chainable')
-},{"chainable":14}],7:[function(require,module,exports){
+},{"chainable":13}],5:[function(require,module,exports){
+module.exports = require('colorfill')
+},{"colorfill":14}],6:[function(require,module,exports){
 module.exports = require('emitterify')
-},{"emitterify":15}],8:[function(require,module,exports){
+},{"emitterify":29}],7:[function(require,module,exports){
 module.exports = require('err')
-},{"err":18}],9:[function(require,module,exports){
-module.exports = require('fn')
-},{"fn":19}],10:[function(require,module,exports){
+},{"err":39}],8:[function(require,module,exports){
 module.exports = require('header')
-},{"header":21}],11:[function(require,module,exports){
+},{"header":43}],9:[function(require,module,exports){
+module.exports = require('identity')
+},{"identity":45}],10:[function(require,module,exports){
+module.exports = require('includes')
+},{"includes":46}],11:[function(require,module,exports){
 module.exports = require('is')
-},{"is":23}],12:[function(require,module,exports){
-module.exports = require('keys')
-},{"keys":24}],13:[function(require,module,exports){
+},{"is":47}],12:[function(require,module,exports){
 module.exports = require('log')
-},{"log":25}],14:[function(require,module,exports){
+},{"log":48}],13:[function(require,module,exports){
 module.exports = function chainable(fn) {
   return function(){
     return fn.apply(this, arguments), fn
   }
 }
-},{}],15:[function(require,module,exports){
-var err = require('err')('emitterify')
-  , def = require('def')
+},{}],14:[function(require,module,exports){
+var client = require('client')
+  , colors = !client && require('colors')
+  , has = require('has')
+  , is = require('is')
 
-module.exports = function emitterify(body) {
-  return def(body, 'on', on)
-       , def(body, 'once', once)
-       , def(body, 'emit', emit)
-       , body
+module.exports = colorfill()
 
-  function emit(type, param) {
-    (body.on[type] || []).forEach(function (d,i,a) {
-      try {
-        (d.once ? a.splice(i, 1).pop().fn : d.fn)(param)
-      } catch(e) { err(e) }
+function colorfill(){
+  /* istanbul ignore next */
+  ['red', 'green', 'bold', 'grey', 'strip'].forEach(function(color) {
+    !is.str(String.prototype[color]) && Object.defineProperty(String.prototype, color, {
+      get: function() {
+        return String(this)
+      } 
     })
+  })
+}
+
+
+},{"client":15,"colors":20,"has":27,"is":28}],15:[function(require,module,exports){
+module.exports = typeof window != 'undefined'
+},{}],16:[function(require,module,exports){
+/*
+
+The MIT License (MIT)
+
+Original Library 
+  - Copyright (c) Marak Squires
+
+Additional functionality
+ - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var colors = {};
+module['exports'] = colors;
+
+colors.themes = {};
+
+var ansiStyles = colors.styles = require('./styles');
+var defineProps = Object.defineProperties;
+
+colors.supportsColor = require('./system/supports-colors');
+
+if (typeof colors.enabled === "undefined") {
+  colors.enabled = colors.supportsColor;
+}
+
+colors.stripColors = colors.strip = function(str){
+  return ("" + str).replace(/\x1B\[\d+m/g, '');
+};
+
+
+var stylize = colors.stylize = function stylize (str, style) {
+  if (!colors.enabled) {
+    return str+'';
   }
 
-  function on(type, callback, opts) {
-    opts = opts || {}
-    opts.fn = callback
-    body.on[type] = body.on[type] || []
-    body.on[type].push(opts)
-    return body
+  return ansiStyles[style].open + str + ansiStyles[style].close;
+}
+
+var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
+var escapeStringRegexp = function (str) {
+  if (typeof str !== 'string') {
+    throw new TypeError('Expected a string');
+  }
+  return str.replace(matchOperatorsRe,  '\\$&');
+}
+
+function build(_styles) {
+  var builder = function builder() {
+    return applyStyle.apply(builder, arguments);
+  };
+  builder._styles = _styles;
+  // __proto__ is used because we must return a function, but there is
+  // no way to create a function with a different prototype.
+  builder.__proto__ = proto;
+  return builder;
+}
+
+var styles = (function () {
+  var ret = {};
+  ansiStyles.grey = ansiStyles.gray;
+  Object.keys(ansiStyles).forEach(function (key) {
+    ansiStyles[key].closeRe = new RegExp(escapeStringRegexp(ansiStyles[key].close), 'g');
+    ret[key] = {
+      get: function () {
+        return build(this._styles.concat(key));
+      }
+    };
+  });
+  return ret;
+})();
+
+var proto = defineProps(function colors() {}, styles);
+
+function applyStyle() {
+  var args = arguments;
+  var argsLen = args.length;
+  var str = argsLen !== 0 && String(arguments[0]);
+  if (argsLen > 1) {
+    for (var a = 1; a < argsLen; a++) {
+      str += ' ' + args[a];
+    }
   }
 
-  function once(type, callback){
-    return body.on(type, callback, { once: true }), body
+  if (!colors.enabled || !str) {
+    return str;
+  }
+
+  var nestedStyles = this._styles;
+
+  var i = nestedStyles.length;
+  while (i--) {
+    var code = ansiStyles[nestedStyles[i]];
+    str = code.open + str.replace(code.closeRe, code.open) + code.close;
+  }
+
+  return str;
+}
+
+function applyTheme (theme) {
+  for (var style in theme) {
+    (function(style){
+      colors[style] = function(str){
+        if (typeof theme[style] === 'object'){
+          var out = str;
+          for (var i in theme[style]){
+            out = colors[theme[style][i]](out);
+          }
+          return out;
+        }
+        return colors[theme[style]](str);
+      };
+    })(style)
   }
 }
 
-},{"def":16,"err":18}],16:[function(require,module,exports){
-var has = require('has')
+colors.setTheme = function (theme) {
+  if (typeof theme === 'string') {
+    try {
+      colors.themes[theme] = require(theme);
+      applyTheme(colors.themes[theme]);
+      return colors.themes[theme];
+    } catch (err) {
+      console.log(err);
+      return err;
+    }
+  } else {
+    applyTheme(theme);
+  }
+};
 
-module.exports = function def(o, p, v, w){
-  !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w })
-  return o[p]
+function init() {
+  var ret = {};
+  Object.keys(styles).forEach(function (name) {
+    ret[name] = {
+      get: function () {
+        return build([name]);
+      }
+    };
+  });
+  return ret;
 }
 
-},{"has":17}],17:[function(require,module,exports){
-module.exports = function has(o, k) {
-  return o.hasOwnProperty(k)
+var sequencer = function sequencer (map, str) {
+  var exploded = str.split(""), i = 0;
+  exploded = exploded.map(map);
+  return exploded.join("");
+};
+
+// custom formatter methods
+colors.trap = require('./custom/trap');
+colors.zalgo = require('./custom/zalgo');
+
+// maps
+colors.maps = {};
+colors.maps.america = require('./maps/america');
+colors.maps.zebra = require('./maps/zebra');
+colors.maps.rainbow = require('./maps/rainbow');
+colors.maps.random = require('./maps/random')
+
+for (var map in colors.maps) {
+  (function(map){
+    colors[map] = function (str) {
+      return sequencer(colors.maps[map], str);
+    }
+  })(map)
 }
+
+defineProps(colors, init());
+},{"./custom/trap":17,"./custom/zalgo":18,"./maps/america":21,"./maps/rainbow":22,"./maps/random":23,"./maps/zebra":24,"./styles":25,"./system/supports-colors":26}],17:[function(require,module,exports){
+module['exports'] = function runTheTrap (text, options) {
+  var result = "";
+  text = text || "Run the trap, drop the bass";
+  text = text.split('');
+  var trap = {
+    a: ["\u0040", "\u0104", "\u023a", "\u0245", "\u0394", "\u039b", "\u0414"],
+    b: ["\u00df", "\u0181", "\u0243", "\u026e", "\u03b2", "\u0e3f"],
+    c: ["\u00a9", "\u023b", "\u03fe"],
+    d: ["\u00d0", "\u018a", "\u0500" , "\u0501" ,"\u0502", "\u0503"],
+    e: ["\u00cb", "\u0115", "\u018e", "\u0258", "\u03a3", "\u03be", "\u04bc", "\u0a6c"],
+    f: ["\u04fa"],
+    g: ["\u0262"],
+    h: ["\u0126", "\u0195", "\u04a2", "\u04ba", "\u04c7", "\u050a"],
+    i: ["\u0f0f"],
+    j: ["\u0134"],
+    k: ["\u0138", "\u04a0", "\u04c3", "\u051e"],
+    l: ["\u0139"],
+    m: ["\u028d", "\u04cd", "\u04ce", "\u0520", "\u0521", "\u0d69"],
+    n: ["\u00d1", "\u014b", "\u019d", "\u0376", "\u03a0", "\u048a"],
+    o: ["\u00d8", "\u00f5", "\u00f8", "\u01fe", "\u0298", "\u047a", "\u05dd", "\u06dd", "\u0e4f"],
+    p: ["\u01f7", "\u048e"],
+    q: ["\u09cd"],
+    r: ["\u00ae", "\u01a6", "\u0210", "\u024c", "\u0280", "\u042f"],
+    s: ["\u00a7", "\u03de", "\u03df", "\u03e8"],
+    t: ["\u0141", "\u0166", "\u0373"],
+    u: ["\u01b1", "\u054d"],
+    v: ["\u05d8"],
+    w: ["\u0428", "\u0460", "\u047c", "\u0d70"],
+    x: ["\u04b2", "\u04fe", "\u04fc", "\u04fd"],
+    y: ["\u00a5", "\u04b0", "\u04cb"],
+    z: ["\u01b5", "\u0240"]
+  }
+  text.forEach(function(c){
+    c = c.toLowerCase();
+    var chars = trap[c] || [" "];
+    var rand = Math.floor(Math.random() * chars.length);
+    if (typeof trap[c] !== "undefined") {
+      result += trap[c][rand];
+    } else {
+      result += c;
+    }
+  });
+  return result;
+
+}
+
 },{}],18:[function(require,module,exports){
-module.exports = function err(prefix){
-  return function(d){
-    var args = [].slice.call(arguments, 0)
-    args.unshift(''.red ? prefix.red : prefix)
-    return console.log.apply(console, args), d
-  }
-}
-},{}],19:[function(require,module,exports){
-var is = require('is')
+// please no
+module['exports'] = function zalgo(text, options) {
+  text = text || "   he is here   ";
+  var soul = {
+    "up" : [
+      '̍', '̎', '̄', '̅',
+      '̿', '̑', '̆', '̐',
+      '͒', '͗', '͑', '̇',
+      '̈', '̊', '͂', '̓',
+      '̈', '͊', '͋', '͌',
+      '̃', '̂', '̌', '͐',
+      '̀', '́', '̋', '̏',
+      '̒', '̓', '̔', '̽',
+      '̉', 'ͣ', 'ͤ', 'ͥ',
+      'ͦ', 'ͧ', 'ͨ', 'ͩ',
+      'ͪ', 'ͫ', 'ͬ', 'ͭ',
+      'ͮ', 'ͯ', '̾', '͛',
+      '͆', '̚'
+    ],
+    "down" : [
+      '̖', '̗', '̘', '̙',
+      '̜', '̝', '̞', '̟',
+      '̠', '̤', '̥', '̦',
+      '̩', '̪', '̫', '̬',
+      '̭', '̮', '̯', '̰',
+      '̱', '̲', '̳', '̹',
+      '̺', '̻', '̼', 'ͅ',
+      '͇', '͈', '͉', '͍',
+      '͎', '͓', '͔', '͕',
+      '͖', '͙', '͚', '̣'
+    ],
+    "mid" : [
+      '̕', '̛', '̀', '́',
+      '͘', '̡', '̢', '̧',
+      '̨', '̴', '̵', '̶',
+      '͜', '͝', '͞',
+      '͟', '͠', '͢', '̸',
+      '̷', '͡', ' ҉'
+    ]
+  },
+  all = [].concat(soul.up, soul.down, soul.mid),
+  zalgo = {};
 
-module.exports = function fn(candid){
-  return is.fn(candid) ? candid
-       : (new Function("return " + candid))()
+  function randomNumber(range) {
+    var r = Math.floor(Math.random() * range);
+    return r;
+  }
+
+  function is_char(character) {
+    var bool = false;
+    all.filter(function (i) {
+      bool = (i === character);
+    });
+    return bool;
+  }
+  
+
+  function heComes(text, options) {
+    var result = '', counts, l;
+    options = options || {};
+    options["up"] =   typeof options["up"]   !== 'undefined' ? options["up"]   : true;
+    options["mid"] =  typeof options["mid"]  !== 'undefined' ? options["mid"]  : true;
+    options["down"] = typeof options["down"] !== 'undefined' ? options["down"] : true;
+    options["size"] = typeof options["size"] !== 'undefined' ? options["size"] : "maxi";
+    text = text.split('');
+    for (l in text) {
+      if (is_char(l)) {
+        continue;
+      }
+      result = result + text[l];
+      counts = {"up" : 0, "down" : 0, "mid" : 0};
+      switch (options.size) {
+      case 'mini':
+        counts.up = randomNumber(8);
+        counts.mid = randomNumber(2);
+        counts.down = randomNumber(8);
+        break;
+      case 'maxi':
+        counts.up = randomNumber(16) + 3;
+        counts.mid = randomNumber(4) + 1;
+        counts.down = randomNumber(64) + 3;
+        break;
+      default:
+        counts.up = randomNumber(8) + 1;
+        counts.mid = randomNumber(6) / 2;
+        counts.down = randomNumber(8) + 1;
+        break;
+      }
+
+      var arr = ["up", "mid", "down"];
+      for (var d in arr) {
+        var index = arr[d];
+        for (var i = 0 ; i <= counts[index]; i++) {
+          if (options[index]) {
+            result = result + soul[index][randomNumber(soul[index].length)];
+          }
+        }
+      }
+    }
+    return result;
+  }
+  // don't summon him
+  return heComes(text, options);
 }
-},{"is":20}],20:[function(require,module,exports){
-module.exports = { 
-  fn     : isFunction
-, str    : isString
-, num    : isNumber
-, obj    : isObject
-, truthy : isTruthy
-, falsy  : isFalsy
-, arr    : isArray
-, null   : isNull
-, def    : isDef
-, in     : isIn
+
+},{}],19:[function(require,module,exports){
+var colors = require('./colors');
+
+module['exports'] = function () {
+
+  //
+  // Extends prototype of native string object to allow for "foo".red syntax
+  //
+  var addProperty = function (color, func) {
+    String.prototype.__defineGetter__(color, func);
+  };
+
+  var sequencer = function sequencer (map, str) {
+      return function () {
+        var exploded = this.split(""), i = 0;
+        exploded = exploded.map(map);
+        return exploded.join("");
+      }
+  };
+
+  addProperty('strip', function () {
+    return colors.strip(this);
+  });
+
+  addProperty('stripColors', function () {
+    return colors.strip(this);
+  });
+
+  addProperty("trap", function(){
+    return colors.trap(this);
+  });
+
+  addProperty("zalgo", function(){
+    return colors.zalgo(this);
+  });
+
+  addProperty("zebra", function(){
+    return colors.zebra(this);
+  });
+
+  addProperty("rainbow", function(){
+    return colors.rainbow(this);
+  });
+
+  addProperty("random", function(){
+    return colors.random(this);
+  });
+
+  addProperty("america", function(){
+    return colors.america(this);
+  });
+
+  //
+  // Iterate through all default styles and colors
+  //
+  var x = Object.keys(colors.styles);
+  x.forEach(function (style) {
+    addProperty(style, function () {
+      return colors.stylize(this, style);
+    });
+  });
+
+  function applyTheme(theme) {
+    //
+    // Remark: This is a list of methods that exist
+    // on String that you should not overwrite.
+    //
+    var stringPrototypeBlacklist = [
+      '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', 'charAt', 'constructor',
+      'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString', 'valueOf', 'charCodeAt',
+      'indexOf', 'lastIndexof', 'length', 'localeCompare', 'match', 'replace', 'search', 'slice', 'split', 'substring',
+      'toLocaleLowerCase', 'toLocaleUpperCase', 'toLowerCase', 'toUpperCase', 'trim', 'trimLeft', 'trimRight'
+    ];
+
+    Object.keys(theme).forEach(function (prop) {
+      if (stringPrototypeBlacklist.indexOf(prop) !== -1) {
+        console.log('warn: '.red + ('String.prototype' + prop).magenta + ' is probably something you don\'t want to override. Ignoring style name');
+      }
+      else {
+        if (typeof(theme[prop]) === 'string') {
+          colors[prop] = colors[theme[prop]];
+          addProperty(prop, function () {
+            return colors[theme[prop]](this);
+          });
+        }
+        else {
+          addProperty(prop, function () {
+            var ret = this;
+            for (var t = 0; t < theme[prop].length; t++) {
+              ret = exports[theme[prop][t]](ret);
+            }
+            return ret;
+          });
+        }
+      }
+    });
+  }
+
+  colors.setTheme = function (theme) {
+    if (typeof theme === 'string') {
+      try {
+        colors.themes[theme] = require(theme);
+        applyTheme(colors.themes[theme]);
+        return colors.themes[theme];
+      } catch (err) {
+        console.log(err);
+        return err;
+      }
+    } else {
+      applyTheme(theme);
+    }
+  };
+
+};
+},{"./colors":16}],20:[function(require,module,exports){
+var colors = require('./colors');
+module['exports'] = colors;
+
+// Remark: By default, colors will add style properties to String.prototype
+//
+// If you don't wish to extend String.prototype you can do this instead and native String will not be touched
+//
+//   var colors = require('colors/safe);
+//   colors.red("foo")
+//
+//
+require('./extendStringPrototype')();
+},{"./colors":16,"./extendStringPrototype":19}],21:[function(require,module,exports){
+var colors = require('../colors');
+
+module['exports'] = (function() {
+  return function (letter, i, exploded) {
+    if(letter === " ") return letter;
+    switch(i%3) {
+      case 0: return colors.red(letter);
+      case 1: return colors.white(letter)
+      case 2: return colors.blue(letter)
+    }
+  }
+})();
+},{"../colors":16}],22:[function(require,module,exports){
+var colors = require('../colors');
+
+module['exports'] = (function () {
+  var rainbowColors = ['red', 'yellow', 'green', 'blue', 'magenta']; //RoY G BiV
+  return function (letter, i, exploded) {
+    if (letter === " ") {
+      return letter;
+    } else {
+      return colors[rainbowColors[i++ % rainbowColors.length]](letter);
+    }
+  };
+})();
+
+
+},{"../colors":16}],23:[function(require,module,exports){
+var colors = require('../colors');
+
+module['exports'] = (function () {
+  var available = ['underline', 'inverse', 'grey', 'yellow', 'red', 'green', 'blue', 'white', 'cyan', 'magenta'];
+  return function(letter, i, exploded) {
+    return letter === " " ? letter : colors[available[Math.round(Math.random() * (available.length - 1))]](letter);
+  };
+})();
+},{"../colors":16}],24:[function(require,module,exports){
+var colors = require('../colors');
+
+module['exports'] = function (letter, i, exploded) {
+  return i % 2 === 0 ? letter : colors.inverse(letter);
+};
+},{"../colors":16}],25:[function(require,module,exports){
+/*
+The MIT License (MIT)
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var styles = {};
+module['exports'] = styles;
+
+var codes = {
+  reset: [0, 0],
+
+  bold: [1, 22],
+  dim: [2, 22],
+  italic: [3, 23],
+  underline: [4, 24],
+  inverse: [7, 27],
+  hidden: [8, 28],
+  strikethrough: [9, 29],
+
+  black: [30, 39],
+  red: [31, 39],
+  green: [32, 39],
+  yellow: [33, 39],
+  blue: [34, 39],
+  magenta: [35, 39],
+  cyan: [36, 39],
+  white: [37, 39],
+  gray: [90, 39],
+  grey: [90, 39],
+
+  bgBlack: [40, 49],
+  bgRed: [41, 49],
+  bgGreen: [42, 49],
+  bgYellow: [43, 49],
+  bgBlue: [44, 49],
+  bgMagenta: [45, 49],
+  bgCyan: [46, 49],
+  bgWhite: [47, 49],
+
+  // legacy styles for colors pre v1.0.0
+  blackBG: [40, 49],
+  redBG: [41, 49],
+  greenBG: [42, 49],
+  yellowBG: [43, 49],
+  blueBG: [44, 49],
+  magentaBG: [45, 49],
+  cyanBG: [46, 49],
+  whiteBG: [47, 49]
+
+};
+
+Object.keys(codes).forEach(function (key) {
+  var val = codes[key];
+  var style = styles[key] = [];
+  style.open = '\u001b[' + val[0] + 'm';
+  style.close = '\u001b[' + val[1] + 'm';
+});
+},{}],26:[function(require,module,exports){
+(function (process){
+/*
+The MIT License (MIT)
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var argv = process.argv;
+
+module.exports = (function () {
+  if (argv.indexOf('--no-color') !== -1 ||
+    argv.indexOf('--color=false') !== -1) {
+    return false;
+  }
+
+  if (argv.indexOf('--color') !== -1 ||
+    argv.indexOf('--color=true') !== -1 ||
+    argv.indexOf('--color=always') !== -1) {
+    return true;
+  }
+
+  if (process.stdout && !process.stdout.isTTY) {
+    return false;
+  }
+
+  if (process.platform === 'win32') {
+    return true;
+  }
+
+  if ('COLORTERM' in process.env) {
+    return true;
+  }
+
+  if (process.env.TERM === 'dumb') {
+    return false;
+  }
+
+  if (/^screen|^xterm|^vt100|color|ansi|cygwin|linux/i.test(process.env.TERM)) {
+    return true;
+  }
+
+  return false;
+})();
+}).call(this,require('_process'))
+},{"_process":3}],27:[function(require,module,exports){
+module.exports = function has(o, k) {
+  return k in o
+}
+},{}],28:[function(require,module,exports){
+module.exports = is
+is.fn     = isFunction
+is.str    = isString
+is.num    = isNumber
+is.obj    = isObject
+is.lit    = isLiteral
+is.bol    = isBoolean
+is.truthy = isTruthy
+is.falsy  = isFalsy
+is.arr    = isArray
+is.null   = isNull
+is.def    = isDef
+is.in     = isIn
+
+function is(v){
+  return function(d){
+    return d == v
+  }
 }
 
 function isFunction(d) {
   return typeof d == 'function'
+}
+
+function isBoolean(d) {
+  return typeof d == 'boolean'
 }
 
 function isString(d) {
@@ -288,6 +920,11 @@ function isNumber(d) {
 
 function isObject(d) {
   return typeof d == 'object'
+}
+
+function isLiteral(d) {
+  return typeof d == 'object' 
+      && !(d instanceof Array)
 }
 
 function isTruthy(d) {
@@ -312,44 +949,94 @@ function isDef(d) {
 
 function isIn(set) {
   return function(d){
-    return ~set.indexOf(d)
+    return  set.indexOf 
+         ? ~set.indexOf(d)
+         :  d in set
   }
 }
-},{}],21:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+var err  = require('err')('[emitterify]')
+  , keys = require('keys')
+  , def  = require('def')
+  , not  = require('not')
+  , is   = require('is')
+  
+module.exports = function emitterify(body) {
+  return def(body, 'on', on)
+       , def(body, 'once', once)
+       , def(body, 'emit', emit)
+       , body
+
+  function emit(type, param, filter) {
+    var ns = type.split('.')[1]
+      , id = type.split('.')[0]
+      , li = body.on[id] || []
+      , tt = li.length-1
+      , pm = is.arr(param) ? param : [param || body]
+
+    if (ns) return invoke(li, ns, pm), body
+
+    for (var i = li.length; i >=0; i--)
+      invoke(li, i, pm)
+
+    keys(li)
+      .filter(not(isFinite))
+      .filter(filter || Boolean)
+      .map(function(n){ return invoke(li, n, pm) })
+
+    return body
+  }
+
+  function invoke(o, k, p){
+    if (!o[k]) return
+    try { o[k].apply(body, p) } catch(e) { err(e, e.stack)  }
+    o[k].once && (isFinite(k) ? o.splice(k, 1) : delete o[k])
+  }
+
+  function on(type, callback) {
+    var ns = type.split('.')[1]
+      , id = type.split('.')[0]
+
+    body.on[id] = body.on[id] || []
+    return !callback && !ns ? (body.on[id])
+         : !callback &&  ns ? (body.on[id][ns])
+         :  ns              ? (body.on[id][ns] = callback, body)
+                            : (body.on[id].push(callback), body)
+  }
+
+  function once(type, callback){
+    return callback.once = true, body.on(type, callback), body
+  }
+}
+},{"def":30,"err":32,"is":36,"keys":37,"not":38}],30:[function(require,module,exports){
 var has = require('has')
 
-module.exports = function header(header, value) {
-  var getter = arguments.length == 1
-  return function(d){ 
-    return !has(d, 'headers')      ? null
-         : !has(d.headers, header) ? null
-         : getter                  ? d['headers'][header]
-                                   : d['headers'][header] == value
-  }
+module.exports = function def(o, p, v, w){
+  !has(o, p) && Object.defineProperty(o, p, { value: v, writable: w })
+  return o[p]
 }
-},{"has":22}],22:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],23:[function(require,module,exports){
-arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],24:[function(require,module,exports){
-module.exports = function keys(o) {
-  return Object.keys(o)
-}
-},{}],25:[function(require,module,exports){
-var is = require('is')
+
+},{"has":31}],31:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],32:[function(require,module,exports){
+var owner = require('owner')
   , to = require('to')
 
-module.exports = function log(prefix){
+module.exports = function err(prefix){
   return function(d){
-    is.arr(arguments[2]) && (arguments[2] = arguments[2].length)
+    if (!owner.console || !console.error.apply) return d;
     var args = to.arr(arguments)
-    args.unshift(''.grey ? prefix.grey : prefix)
-    return console.log.apply(console, args), d
+    args.unshift(prefix.red ? prefix.red : prefix)
+    return console.error.apply(console, args), d
   }
 }
-},{"is":26,"to":27}],26:[function(require,module,exports){
-arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],27:[function(require,module,exports){
+},{"owner":33,"to":35}],33:[function(require,module,exports){
+(function (global){
+module.exports = require('client') ? /* istanbul ignore next */ window : global
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"client":34}],34:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],35:[function(require,module,exports){
 module.exports = { 
   arr : toArray
 }
@@ -357,16 +1044,83 @@ module.exports = {
 function toArray(d){
   return Array.prototype.slice.call(d, 0)
 }
-},{}],28:[function(require,module,exports){
-module.exports = function noop(){}
-},{}],29:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],37:[function(require,module,exports){
+module.exports = function keys(o) {
+  return Object.keys(o || {})
+}
+},{}],38:[function(require,module,exports){
+module.exports = function not(fn){
+  return function(){
+    return !fn.apply(this, arguments)
+  }
+}
+},{}],39:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32,"owner":40,"to":42}],40:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"client":41,"dup":33}],41:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],42:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],43:[function(require,module,exports){
+var has = require('has')
+
+module.exports = function header(header, value) {
+  var getter = arguments.length == 1
+  return function(d){ 
+    return !d                      ? null
+         : !has(d, 'headers')      ? null
+         : !has(d.headers, header) ? null
+         : getter                  ? d['headers'][header]
+                                   : d['headers'][header] == value
+  }
+}
+},{"has":44}],44:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],45:[function(require,module,exports){
+module.exports = function identity(d) {
+  return d
+}
+},{}],46:[function(require,module,exports){
+module.exports = function includes(pattern){
+  return function(d){
+    return ~d.indexOf(pattern)
+  }
+}
+},{}],47:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],48:[function(require,module,exports){
+var is = require('is')
+  , to = require('to')
+  , owner = require('owner')
+
+module.exports = function log(prefix){
+  return function(d){
+    if (!owner.console || !console.log.apply) return d;
+    is.arr(arguments[2]) && (arguments[2] = arguments[2].length)
+    var args = to.arr(arguments)
+    args.unshift(prefix.grey ? prefix.grey : prefix)
+    return console.log.apply(console, args), d
+  }
+}
+},{"is":49,"owner":50,"to":52}],49:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],50:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"client":51,"dup":33}],51:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],52:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],53:[function(require,module,exports){
 module.exports = function objectify(rows, by) {
   var o = {}, by = by || 'name'
   return rows.forEach(function(d){
     return o[d[by]] = d 
   }), o
 }
-},{}],30:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = function(target, source) {
   var i = 1, n = arguments.length, method
   while (++i < n) target[method = arguments[i]] = rebind(target, source, source[method])
@@ -379,27 +1133,83 @@ function rebind(target, source, method) {
     return value === source ? target : value
   }
 }
-},{}],31:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var keys = require('keys')
-  , base = require('base')
+  , from = require('from')
 
 module.exports = function values(o) {
-  return !o ? [] : keys(o).map(base(o))
+  return !o ? [] : keys(o).map(from(o))
 }
-},{"base":32,"keys":33}],32:[function(require,module,exports){
-module.exports = function base(o) {
-  return function (k) {
-    return o[k]
+},{"from":56,"keys":63}],56:[function(require,module,exports){
+var datum = require('datum')
+  , key = require('key')
+
+module.exports = from
+from.parent = fromParent
+
+function from(o){
+  return function(k){
+    return key(k)(o)
   }
 }
-},{}],33:[function(require,module,exports){
-arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],34:[function(require,module,exports){
-module.exports = require('noop')
-},{"noop":28}],35:[function(require,module,exports){
+
+function fromParent(k){
+  return datum(this.parentNode)[k]
+}
+},{"datum":57,"key":59}],57:[function(require,module,exports){
+var sel = require('sel')
+
+module.exports = function datum(node){
+  return sel(node).datum()
+}
+},{"sel":58}],58:[function(require,module,exports){
+module.exports = function sel(){
+  return d3.select.apply(this, arguments)
+}
+},{}],59:[function(require,module,exports){
+var is = require('is')
+  , str = require('str')
+
+module.exports = function key(k, v){ 
+  var set = arguments.length > 1
+    , keys = str(k).split('.')
+    , root = keys.shift()
+
+  return function deep(o){
+    var masked = {}
+    return !o ? undefined 
+         : !k ? o
+         : is.arr(k) ? (k.map(copy), masked)
+         : o[k] || !keys.length ? (set ? ((o[k] = is.fn(v) ? v(o[k]) : v), o)
+                                       :   o[k])
+                                : (set ? key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {}))
+                                       : key(keys.join('.'))(o[root]))
+
+    function copy(d){
+      key(d, key(d)(o))(masked)
+    }
+  }
+}
+},{"is":60,"str":61}],60:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],61:[function(require,module,exports){
+var is = require('is') 
+
+module.exports = function str(d){
+  return d === 0 ? '0'
+       : !d ? ''
+       : is.fn(d) ? '' + d
+       : is.obj(d) ? JSON.stringify(d)
+       : String(d)
+}
+},{"is":62}],62:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],63:[function(require,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"dup":37}],64:[function(require,module,exports){
 module.exports = require('objectify')
-},{"objectify":29}],36:[function(require,module,exports){
+},{"objectify":53}],65:[function(require,module,exports){
 module.exports = require('rebind')
-},{"rebind":30}],37:[function(require,module,exports){
+},{"rebind":54}],66:[function(require,module,exports){
 module.exports = require('values')
-},{"values":31}]},{},[1]);
+},{"values":55}]},{},[1]);

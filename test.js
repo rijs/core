@@ -4,42 +4,39 @@ var header = require('utilise/header')
   , core = require('./')
   , ripple
 
-describe('core', function() {
+describe('Core', function() {
   beforeEach(function(){
     ripple = core()
   })
 
   it('should create empty resource from name', function(){  
-    expect(ripple('sth')).to.eql([])
+    expect(ripple('foo', 'bar')).to.eql('bar')
   })
 
-  it('should create different core types', function(){  
-    expect(ripple('1', 'sth')).to.eql('sth')
-    expect(ripple('2', [])).to.eql([])
-    expect(ripple('3', {})).to.eql({})
-    expect(ripple('4', String)).to.eql(String)
+  it('should fail to create resource it does not understand', function(){  
+    expect(ripple('foo')).to.eql(false)
+  })
 
-    expect(header('content-type')(ripple.resources['1'])).to.be.equal('text/plain')
-    expect(header('content-type')(ripple.resources['2'])).to.be.equal('application/data')
-    expect(header('content-type')(ripple.resources['3'])).to.be.equal('application/data')
-    expect(header('content-type')(ripple.resources['4'])).to.be.equal('application/javascript')
+  it('should set ', function(){  
+    ripple('foo', 'bar')
+    expect(header('content-type')(ripple.resources['foo'])).to.be.equal('text/plain')
   })
 
   it('should create resource using alias', function(){  
-    expect(ripple.register('sth', 'els')).to.eql('els')
+    expect(ripple.register('foo', 'bar')).to.eql('bar')
   })
 
   it('should create and get resource from name', function(){  
-    expect(ripple('sth', ['lorem'])).to.eql(['lorem'])
-    expect(ripple('sth')).to.eql(['lorem'])
+    ripple('foo', 'bar')
+    expect(ripple('foo')).to.eql('bar')
   })
 
   it('should create and get resource from obj', function(){  
-    expect(ripple({ name: 'sth', body: {a:1}, headers: {} })).to.eql({a:1})
-    expect(ripple.resources.sth).to.eql({
-      name: 'sth'
-    , body: { a : 1 }
-    , headers: { 'content-type': 'application/data' } 
+    expect(ripple({ name: 'foo', body: 'bar', headers: {} })).to.eql('bar')
+    expect(ripple.resources.foo).to.eql({
+      name: 'foo'
+    , body: 'bar'
+    , headers: { 'content-type': 'text/plain' } 
     })
   })
 
@@ -47,22 +44,22 @@ describe('core', function() {
     expect(ripple({
       name: 'sth'
     , body: { a : 1 }
-    , headers: { 'content-type': 'application/data' } 
+    , headers: { 'content-type': 'text/plain' } 
     })).to.eql({ a : 1 })
     expect(ripple.resources.sth).to.eql({
       name: 'sth'
     , body: { a : 1 }
-    , headers: { 'content-type': 'application/data' } 
+    , headers: { 'content-type': 'text/plain' } 
     })
   })
 
   it('should support method chaining api', function(){  
     ripple
-      .resource('1', [10])
-      .resource('2', [20])
+      .resource('foo', 'bar')
+      .resource('bar', 'foo')
 
-    expect(ripple('1')).to.eql([10])
-    expect(ripple('2')).to.eql([20])
+    expect(ripple('foo')).to.eql('bar')
+    expect(ripple('bar')).to.eql('foo')
   })
 
   it('should create two different ripple nodes', function(){
@@ -72,18 +69,31 @@ describe('core', function() {
     expect(ripple1).to.not.equal(ripple2)
   })
 
-  it('should fail if cannot interpret resource', function(){
-    delete ripple.types['application/data']
-    expect(ripple('sth', [])).to.not.be.ok
-    expect(ripple('els')).to.not.be.ok
+  it('should register multiple resources', function(){
+    ripple([{name:'foo', body:'1'}, {name:'bar', body:'1'}])
+    
+    expect('foo' in ripple.resources).to.be.ok
+    expect('bar' in ripple.resources).to.be.ok
+  })
 
-    expect('sth' in ripple.resources).to.be.false
-    expect('els' in ripple.resources).to.be.false
+  it('should destroy existing headers by default', function(){
+    ripple({ name: 'name', body: 'foo', headers: { 'foo': 'bar' }})
+    expect(ripple.resources.name.headers.foo).to.be.eql('bar')
+
+    ripple({ name:'name', body: 'baz' })
+    expect(ripple.resources.name.headers.foo).to.be.not.ok
+  })
+
+  it('should fail if cannot interpret resource', function(){
+    expect(ripple('foo', [])).to.not.be.ok
+    expect(ripple('bar')).to.not.be.ok
+
+    expect('foo' in ripple.resources).to.be.false
+    expect('bar' in ripple.resources).to.be.false
   })
 
   it('should fail if uses api incorrectly', function(){
     expect(ripple()).to.not.be.ok
-    expect(ripple([])).to.not.be.ok
     expect(ripple(String)).to.not.be.ok
     expect(ripple.resources).to.eql({})
   })
@@ -93,20 +103,7 @@ describe('core', function() {
       , fn = function(){ called++ }
 
     ripple.on('change', fn)
-    ripple('sth')
-    expect(called).to.equal(1)
-  })
-
-  it('should emit local change events', function(){
-    var called = 0
-      , fn = function(){ called++ }
-
-    ripple('sth')
-    ripple('raa')
-    ripple.on('change', fn)
-    ripple('raa').on('change', fn)
-    ripple('sth').on('change', fn)
-    ripple('sth').emit('change')
+    ripple('foo', 'bar')
     expect(called).to.equal(1)
   })
 

@@ -31,15 +31,10 @@
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 module.exports = {
-  header: "application/javascript",
+  header: "text/css",
   check: function check(res) {
-    return is.fn(res.body);
-  },
-  inflate: function inflate(res) {
-    res.body = fn(res.body);
+    return includes(".css")(res.name);
   }
 };
 
-var is = _interopRequire(require("utilise/is"));
-
-var fn = _interopRequire(require("utilise/fn"));
+var includes = _interopRequire(require("utilise/includes"));

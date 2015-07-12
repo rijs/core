@@ -19,7 +19,7 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 module.exports = core;
 
 function core() {
-  log("creating core");
+  log("creating");
 
   var resources = {};
   ripple.resources = resources;
@@ -29,7 +29,7 @@ function core() {
   return emitterify(ripple);
 
   function ripple(name, body, headers) {
-    return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+    return is.arr(name) ? name.map(ripple) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
   }
 }
 
@@ -40,11 +40,13 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
+    if (!name) return err("cannot register nameless resource");
     log("registering", name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers });
+
     if (!res) return (err("failed to register", name), false);
     ripple.resources[name] = res;
-    ripple.emit("change", ripple.resources[name]);
+    ripple.emit("change", [ripple.resources[name]]);
     return ripple.resources[name].body;
   };
 }
@@ -53,14 +55,13 @@ function normalise(ripple) {
   return function (res) {
     if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand", res), false);
-    inflate(ripple)(res);
-    return res;
+    return parse(ripple)(res);
   };
 }
 
-function inflate(ripple) {
+function parse(ripple) {
   return function (res) {
-    (ripple.types[header("content-type")(res)].inflate || noop)(res);
+    return ((ripple.types[header("content-type")(res)] || {}).parse || identity)(res);
   };
 }
 
@@ -71,24 +72,24 @@ function contentType(res) {
 }
 
 function types() {
-  return objectify([text, fn, data], "header");
+  return objectify([text], "header");
 }
 
-require("colors");
-
 var emitterify = _interopRequire(require("utilise/emitterify"));
+
+var colorfill = _interopRequire(require("utilise/colorfill"));
 
 var chainable = _interopRequire(require("utilise/chainable"));
 
 var objectify = _interopRequire(require("utilise/objectify"));
+
+var identity = _interopRequire(require("utilise/identity"));
 
 var rebind = _interopRequire(require("utilise/rebind"));
 
 var header = _interopRequire(require("utilise/header"));
 
 var values = _interopRequire(require("utilise/values"));
-
-var noop = _interopRequire(require("utilise/noop"));
 
 var err = _interopRequire(require("utilise/err"));
 
@@ -97,10 +98,6 @@ var log = _interopRequire(require("utilise/log"));
 var is = _interopRequire(require("utilise/is"));
 
 var text = _interopRequire(require("./types/text"));
-
-var data = _interopRequire(require("./types/data"));
-
-var fn = _interopRequire(require("./types/fn"));
 
 err = err("[ri/core]");
 log = log("[ri/core]");
