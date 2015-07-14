@@ -1,5 +1,5 @@
 {
-  "name": "core",
+  "name": "rijs.core",
   "version": "0.0.0",
   "main": "dist",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
