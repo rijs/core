@@ -17,7 +17,7 @@ describe('Core', function() {
     expect(ripple('foo')).to.eql(false)
   })
 
-  it('should set ', function(){  
+  it('should set content-type by default', function(){  
     ripple('foo', 'bar')
     expect(header('content-type')(ripple.resources['foo'])).to.be.equal('text/plain')
   })
