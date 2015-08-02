@@ -61,13 +61,12 @@ function contentType(res){
 }
 
 function types() {
-  return objectify([text], 'header')
+  return [text].reduce(to.obj('header'), 1)
 }
 
 import emitterify from 'utilise/emitterify'
 import colorfill  from 'utilise/colorfill'
 import chainable  from 'utilise/chainable'
-import objectify  from 'utilise/objectify'
 import identity   from 'utilise/identity'
 import rebind     from 'utilise/rebind'
 import header     from 'utilise/header'
@@ -75,6 +74,7 @@ import values     from 'utilise/values'
 import err        from 'utilise/err'
 import log        from 'utilise/log'
 import is         from 'utilise/is'
+import to         from 'utilise/to'
 import text       from './types/text'
 err = err('[ri/core]')
 log = log('[ri/core]')

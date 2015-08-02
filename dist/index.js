@@ -72,7 +72,7 @@ function contentType(res) {
 }
 
 function types() {
-  return objectify([text], "header");
+  return [text].reduce(to.obj("header"), 1);
 }
 
 var emitterify = _interopRequire(require("utilise/emitterify"));
@@ -80,8 +80,6 @@ var emitterify = _interopRequire(require("utilise/emitterify"));
 var colorfill = _interopRequire(require("utilise/colorfill"));
 
 var chainable = _interopRequire(require("utilise/chainable"));
-
-var objectify = _interopRequire(require("utilise/objectify"));
 
 var identity = _interopRequire(require("utilise/identity"));
 
@@ -96,6 +94,8 @@ var err = _interopRequire(require("utilise/err"));
 var log = _interopRequire(require("utilise/log"));
 
 var is = _interopRequire(require("utilise/is"));
+
+var to = _interopRequire(require("utilise/to"));
 
 var text = _interopRequire(require("./types/text"));
 

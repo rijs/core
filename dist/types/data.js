@@ -30,6 +30,9 @@
 /* istanbul ignore next */
 /* istanbul ignore next */
 /* istanbul ignore next */
+/* istanbul ignore next */
+/* istanbul ignore next */
+/* istanbul ignore next */
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 module.exports = {
