@@ -40,6 +40,17 @@ describe('Core', function() {
     })
   })
 
+  it('should create import resources from another node', function(){  
+    ripple({ name: 'foo', body: 'bar', headers: {} })
+    var ripple2 = core()
+    ripple2(ripple)
+    expect(ripple2.resources.foo).to.eql({
+      name: 'foo'
+    , body: 'bar'
+    , headers: { 'content-type': 'text/plain' } 
+    })
+  })
+
   it('should use explicitly set headers', function(){  
     expect(ripple({
       name: 'sth'

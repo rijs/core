@@ -28,8 +28,26 @@ function core() {
   ripple.types = types();
   return emitterify(ripple);
 
-  function ripple(name, body, headers) {
-    return is.arr(name) ? name.map(ripple) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+  function ripple(_x, _x2, _x3) {
+    var _again = true;
+
+    _function: while (_again) {
+      _again = false;
+      var name = _x,
+          body = _x2,
+          headers = _x3;
+      if (is.arr(name)) {
+        return name.map(ripple);
+      } else {
+        if (is.fn(name) && name.resources) {
+          _x = values(name.resources);
+          _again = true;
+          continue _function;
+        } else {
+          return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+        }
+      }
+    }
   }
 }
 
