@@ -104,7 +104,7 @@ describe('Core', function() {
   })
 
   it('should fail if uses api incorrectly', function(){
-    expect(ripple()).to.not.be.ok
+    expect(ripple()).to.be.eql(ripple)
     expect(ripple(String)).to.not.be.ok
     expect(ripple.resources).to.eql({})
   })

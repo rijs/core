@@ -22,7 +22,8 @@ export default function core(){
   return emitterify(ripple)
 
   function ripple(name, body, headers){
-    return is.arr(name)                              ? name.map(ripple)
+    return !name                                     ? ripple
+         : is.arr(name)                              ? name.map(ripple)
          : is.fn(name)  &&  name.resources           ? ripple(values(name.resources))
          : is.str(name) && !body &&  resources[name] ? resources[name].body
          : is.str(name) && !body && !resources[name] ? register(ripple)({ name })
