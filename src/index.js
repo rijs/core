@@ -35,13 +35,14 @@ export default function core(){
 
 function register(ripple) { 
   return ({name, body, headers = {}}) => {
-    if (!name) return err('cannot register nameless resource')
+    if (!name) return err('cannot register nameless resource'), false
     log('registering', name)
     var res = normalise(ripple)({ name, body, headers })
+      , type = !ripple.resources[name] ? 'load' : ''
 
     if (!res) return err('failed to register', name), false
     ripple.resources[name] = res
-    ripple.emit('change', [ripple.resources[name]])
+    ripple.emit('change', [ripple.resources[name], { type }])
     return ripple.resources[name].body
   }
 }
@@ -49,13 +50,17 @@ function register(ripple) {
 function normalise(ripple) {
   return (res) => {
     if (!header('content-type')(res)) values(ripple.types).some(contentType(res))
-    if (!header('content-type')(res)) return err('could not understand', res), false
+    if (!header('content-type')(res)) return err('could not understand resource', res), false
     return parse(ripple)(res)
   }
 }
 
 function parse(ripple) {
-  return (res) => ((ripple.types[header('content-type')(res)] || {}).parse || identity)(res)
+  return (res) => {
+    var type = header('content-type')(res)
+    if (!ripple.types[type]) return err('could not understand type', type), false
+    return (ripple.types[type].parse || identity)(res)
+  }
 }
 
 function contentType(res){

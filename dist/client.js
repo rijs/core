@@ -75,9 +75,10 @@ module.exports = function emitterify(body) {
 
   function invoke(o, k, p){
     if (!o[k]) return
-    try { o[k].apply(body, p) } catch(e) { err(e, e.stack)  }
+    var fn = o[k]
     o[k].once && (isFinite(k) ? o.splice(k, 1) : delete o[k])
-  }
+    try { fn.apply(body, p) } catch(e) { err(e, e.stack)  }
+   }
 
   function on(type, callback) {
     var ns = type.split('.')[1]
@@ -1050,13 +1051,14 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    if (!name) return err("cannot register nameless resource");
+    if (!name) return (err("cannot register nameless resource"), false);
     log("registering", name);
-    var res = normalise(ripple)({ name: name, body: body, headers: headers });
+    var res = normalise(ripple)({ name: name, body: body, headers: headers }),
+        type = !ripple.resources[name] ? "load" : "";
 
     if (!res) return (err("failed to register", name), false);
     ripple.resources[name] = res;
-    ripple.emit("change", [ripple.resources[name]]);
+    ripple.emit("change", [ripple.resources[name], { type: type }]);
     return ripple.resources[name].body;
   };
 }
@@ -1064,14 +1066,16 @@ function register(ripple) {
 function normalise(ripple) {
   return function (res) {
     if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
-    if (!header("content-type")(res)) return (err("could not understand", res), false);
+    if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
 }
 
 function parse(ripple) {
   return function (res) {
-    return ((ripple.types[header("content-type")(res)] || {}).parse || identity)(res);
+    var type = header("content-type")(res);
+    if (!ripple.types[type]) return (err("could not understand type", type), false);
+    return (ripple.types[type].parse || identity)(res);
   };
 }
 

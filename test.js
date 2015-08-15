@@ -106,6 +106,12 @@ describe('Core', function() {
   it('should fail if uses api incorrectly', function(){
     expect(ripple()).to.be.eql(ripple)
     expect(ripple(String)).to.not.be.ok
+    expect(ripple({ body: 'foo' })).to.not.be.ok
+    expect(ripple.resources).to.eql({})
+  })
+
+  it('should not register type it does not understand', function(){
+    expect(ripple({ name: 'foo', body: 'foo', headers: { 'content-type': 'application/jsx' }})).to.not.be.ok
     expect(ripple.resources).to.eql({})
   })
 
@@ -116,6 +122,18 @@ describe('Core', function() {
     ripple.on('change', fn)
     ripple('foo', 'bar')
     expect(called).to.equal(1)
+  })
+
+  it('should indicate if new resource', function(done){
+    ripple.once('change', function(d, change){
+      expect(change).to.eql({ type: 'load' })
+      ripple.once('change', function(d, change){
+        expect(change).to.eql({ type: '' })
+        done()
+      })
+      ripple('foo', 'bar')
+    })
+    ripple('foo', 'foo')
   })
 
 })
