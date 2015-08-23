@@ -24,6 +24,7 @@ export default function core(){
   function ripple(name, body, headers){
     return !name                                     ? ripple
          : is.arr(name)                              ? name.map(ripple)
+         : is.obj(name) && !name.name                ? ripple
          : is.fn(name)  &&  name.resources           ? ripple(values(name.resources))
          : is.str(name) && !body &&  resources[name] ? resources[name].body
          : is.str(name) && !body && !resources[name] ? register(ripple)({ name })
@@ -35,7 +36,6 @@ export default function core(){
 
 function register(ripple) { 
   return ({name, body, headers = {}}) => {
-    if (!name) return err('cannot register nameless resource'), false
     log('registering', name)
     var res = normalise(ripple)({ name, body, headers })
       , type = !ripple.resources[name] ? 'load' : ''

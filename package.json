@@ -15,7 +15,8 @@
     "minify": "uglifyjs dist/client.js -m -c drop_console,dead_code -d debug=false -o dist/client.min.js",
     "build": "npm run babel && npm run ignore && npm run bundle && npm run minify",
     "test": "istanbul test ./node_modules/mocha/bin/_mocha --report html -- -R spec",
-    "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && rm -rf ./coverage"
+    "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && rm -rf ./coverage",
+    "cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec"
   },
   "browser": {
     "colors": false

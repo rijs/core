@@ -1031,12 +1031,16 @@ function core() {
         if (is.arr(name)) {
           return name.map(ripple);
         } else {
-          if (is.fn(name) && name.resources) {
-            _x = values(name.resources);
-            _again = true;
-            continue _function;
+          if (is.obj(name) && !name.name) {
+            return ripple;
           } else {
-            return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            if (is.fn(name) && name.resources) {
+              _x = values(name.resources);
+              _again = true;
+              continue _function;
+            } else {
+              return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
+            }
           }
         }
       }
@@ -1051,7 +1055,6 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    if (!name) return (err("cannot register nameless resource"), false);
     log("registering", name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers }),
         type = !ripple.resources[name] ? "load" : "";
