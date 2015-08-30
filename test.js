@@ -140,4 +140,28 @@ describe('Core', function() {
     ripple('foo', 'foo')
   })
 
+  it('should register new types by order', function(){
+    ripple('text', 'text')
+    expect(ripple.resources.text.headers['content-type']).to.eql('text/plain')
+
+    ripple.types['priority/low'] = {
+      header: 'priority/low'
+    , check: String
+    , priority: -10
+    }
+
+    ripple('low', 'low')
+    expect(ripple.resources.low.headers['content-type']).to.eql('text/plain')
+
+    ripple.types['priority/high'] = {
+      header: 'priority/high'
+    , check: String
+    , priority: 10
+    }
+
+    ripple('high', 'high')
+    expect(ripple.resources.high.headers['content-type']).to.eql('priority/high')
+
+  })  
+
 })

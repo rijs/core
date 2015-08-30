@@ -49,7 +49,7 @@ function register(ripple) {
 
 function normalise(ripple) {
   return (res) => {
-    if (!header('content-type')(res)) values(ripple.types).some(contentType(res))
+    if (!header('content-type')(res)) values(ripple.types).sort(za('priority')).some(contentType(res))
     if (!header('content-type')(res)) return err('could not understand resource', res), false
     return parse(ripple)(res)
   }
@@ -82,6 +82,7 @@ import err        from 'utilise/err'
 import log        from 'utilise/log'
 import is         from 'utilise/is'
 import to         from 'utilise/to'
+import az         from 'utilise/az'
 import text       from './types/text'
 err = err('[ri/core]')
 log = log('[ri/core]')

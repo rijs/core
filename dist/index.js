@@ -79,7 +79,8 @@ function register(ripple) {
 
 function normalise(ripple) {
   return function (res) {
-    if (!header("content-type")(res)) values(ripple.types).some(contentType(res));
+    console.log("types", values(ripple.types).sort(az("priority")).reverse());
+    if (!header("content-type")(res)) values(ripple.types).sort(az("priority")).reverse().some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
@@ -124,6 +125,8 @@ var log = _interopRequire(require("utilise/log"));
 var is = _interopRequire(require("utilise/is"));
 
 var to = _interopRequire(require("utilise/to"));
+
+var az = _interopRequire(require("utilise/az"));
 
 var text = _interopRequire(require("./types/text"));
 
