@@ -158,7 +158,7 @@ module.exports = function identity(d) {
 },{}],13:[function(require,module,exports){
 module.exports = function includes(pattern){
   return function(d){
-    return ~d.indexOf(pattern)
+    return d && d.indexOf && ~d.indexOf(pattern)
   }
 }
 },{}],14:[function(require,module,exports){
@@ -1080,8 +1080,7 @@ function register(ripple) {
 
 function normalise(ripple) {
   return function (res) {
-    console.log("types", values(ripple.types).sort(az("priority")).reverse());
-    if (!header("content-type")(res)) values(ripple.types).sort(az("priority")).reverse().some(contentType(res));
+    if (!header("content-type")(res)) values(ripple.types).sort(za("priority")).some(contentType(res));
     if (!header("content-type")(res)) return (err("could not understand resource", res), false);
     return parse(ripple)(res);
   };
