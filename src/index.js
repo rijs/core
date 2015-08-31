@@ -82,7 +82,7 @@ import err        from 'utilise/err'
 import log        from 'utilise/log'
 import is         from 'utilise/is'
 import to         from 'utilise/to'
-import az         from 'utilise/az'
+import za         from 'utilise/za'
 import text       from './types/text'
 err = err('[ri/core]')
 log = log('[ri/core]')

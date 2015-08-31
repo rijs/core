@@ -125,7 +125,7 @@ var is = _interopRequire(require("utilise/is"));
 
 var to = _interopRequire(require("utilise/to"));
 
-var az = _interopRequire(require("utilise/az"));
+var za = _interopRequire(require("utilise/za"));
 
 var text = _interopRequire(require("./types/text"));
 
