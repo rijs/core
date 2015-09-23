@@ -36,7 +36,7 @@ That is, it can be uniquely identified (`name`), the resource itself (`body`) an
 
 Core only comes with one _type_ (`text/plain`) out of the box, so will fail to register anything other than a string. This is to make it very extensible and future-proof, such that you could for example create other exotic types like `application/jsx`, `text/jade` or `data/immutable`.
 
-Note that you do not have to register a canonical resource, you will most likely use shortcuts in your application code (see [API](https://github.com/rijs/core#--API) for more).
+Note that you do not have to register a canonical resource, you will most likely use shortcuts in your application code (see [API](https://github.com/rijs/core#api) for more).
 
 ```js
 ripple('foo', 'bar')
@@ -45,7 +45,7 @@ ripple('foo', 'bar')
 {
   foo: { name: 'foo'
        , body: 'bar'
-       , headers: { 'content-type': 'text/plain }
+       , headers: { 'content-type': 'text/plain' }
        }
 }
 ```
