@@ -990,11 +990,14 @@ module.exports = function values(o) {
 },{"utilise/from":8,"utilise/keys":15}],35:[function(require,module,exports){
 var key = require('utilise/key')
 
-module.exports = function az(k) {
+module.exports = function za(k) {
   return function(a, b){
-    return (key(k)(a) | 0)  > (key(k)(b) | 0) ? -1 
-         : (key(k)(a) | 0)  < (key(k)(b) | 0) ?  1 
-                                              :  0
+    var ka = key(k)(a) || ''
+      , kb = key(k)(b) || ''
+
+    return ka > kb ? -1 
+         : ka < kb ?  1 
+                   :  0
   }
 }
 
