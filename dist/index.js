@@ -1,7 +1,56 @@
-"use strict";
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = core;
+
+var _emitterify = require('utilise/emitterify');
+
+var _emitterify2 = _interopRequireDefault(_emitterify);
+
+var _colorfill = require('utilise/colorfill');
+
+var _colorfill2 = _interopRequireDefault(_colorfill);
+
+var _chainable = require('utilise/chainable');
+
+var _chainable2 = _interopRequireDefault(_chainable);
+
+var _identity = require('utilise/identity');
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _rebind = require('utilise/rebind');
+
+var _rebind2 = _interopRequireDefault(_rebind);
+
+var _header = require('utilise/header');
+
+var _header2 = _interopRequireDefault(_header);
+
+var _values = require('utilise/values');
+
+var _values2 = _interopRequireDefault(_values);
+
+var _is = require('utilise/is');
+
+var _is2 = _interopRequireDefault(_is);
+
+var _to = require('utilise/to');
+
+var _to2 = _interopRequireDefault(_to);
+
+var _za = require('utilise/za');
+
+var _za2 = _interopRequireDefault(_za);
+
+var _text = require('./types/text');
+
+var _text2 = _interopRequireDefault(_text);
 
 /* istanbul ignore next */
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // -------------------------------------------
 // API: Gets or sets a resource
@@ -16,46 +65,18 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-module.exports = core;
-
 function core() {
-  log("creating");
+  log('creating');
 
   var resources = {};
   ripple.resources = resources;
-  ripple.resource = chainable(ripple);
+  ripple.resource = (0, _chainable2.default)(ripple);
   ripple.register = ripple;
   ripple.types = types();
-  return emitterify(ripple);
+  return (0, _emitterify2.default)(ripple);
 
-  function ripple(_x, _x2, _x3) {
-    var _again = true;
-
-    _function: while (_again) {
-      _again = false;
-      var name = _x,
-          body = _x2,
-          headers = _x3;
-      if (!name) {
-        return ripple;
-      } else {
-        if (is.arr(name)) {
-          return name.map(ripple);
-        } else {
-          if (is.obj(name) && !name.name) {
-            return ripple;
-          } else {
-            if (is.fn(name) && name.resources) {
-              _x = values(name.resources);
-              _again = true;
-              continue _function;
-            } else {
-              return is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err("could not find or create resource", name), false);
-            }
-          }
-        }
-      }
-    }
+  function ripple(name, body, headers) {
+    return !name ? ripple : _is2.default.arr(name) ? name.map(ripple) : _is2.default.obj(name) && !name.name ? ripple : _is2.default.fn(name) && name.resources ? ripple((0, _values2.default)(name.resources)) : _is2.default.str(name) && !body && resources[name] ? resources[name].body : _is2.default.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : _is2.default.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : _is2.default.obj(name) && !_is2.default.arr(name) ? register(ripple)(name) : (err('could not find or create resource', name), false);
   }
 }
 
@@ -66,68 +87,42 @@ function register(ripple) {
     var _ref$headers = _ref.headers;
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
-    log("registering", name);
+    log('registering', name);
     var res = normalise(ripple)({ name: name, body: body, headers: headers }),
-        type = !ripple.resources[name] ? "load" : "";
+        type = !ripple.resources[name] ? 'load' : '';
 
-    if (!res) return (err("failed to register", name), false);
+    if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit("change", [ripple.resources[name], { type: type }]);
+    ripple.emit('change', [ripple.resources[name], { type: type }]);
     return ripple.resources[name].body;
   };
 }
 
 function normalise(ripple) {
   return function (res) {
-    if (!header("content-type")(res)) values(ripple.types).sort(za("priority")).some(contentType(res));
-    if (!header("content-type")(res)) return (err("could not understand resource", res), false);
+    if (!(0, _header2.default)('content-type')(res)) (0, _values2.default)(ripple.types).sort((0, _za2.default)('priority')).some(contentType(res));
+    if (!(0, _header2.default)('content-type')(res)) return err('could not understand resource', res), false;
     return parse(ripple)(res);
   };
 }
 
 function parse(ripple) {
   return function (res) {
-    var type = header("content-type")(res);
-    if (!ripple.types[type]) return (err("could not understand type", type), false);
-    return (ripple.types[type].parse || identity)(res);
+    var type = (0, _header2.default)('content-type')(res);
+    if (!ripple.types[type]) return err('could not understand type', type), false;
+    return (ripple.types[type].parse || _identity2.default)(res);
   };
 }
 
 function contentType(res) {
   return function (type) {
-    return type.check(res) && (res.headers["content-type"] = type.header);
+    return type.check(res) && (res.headers['content-type'] = type.header);
   };
 }
 
 function types() {
-  return [text].reduce(to.obj("header"), 1);
+  return [_text2.default].reduce(_to2.default.obj('header'), 1);
 }
 
-var emitterify = _interopRequire(require("utilise/emitterify"));
-
-var colorfill = _interopRequire(require("utilise/colorfill"));
-
-var chainable = _interopRequire(require("utilise/chainable"));
-
-var identity = _interopRequire(require("utilise/identity"));
-
-var rebind = _interopRequire(require("utilise/rebind"));
-
-var header = _interopRequire(require("utilise/header"));
-
-var values = _interopRequire(require("utilise/values"));
-
-var err = _interopRequire(require("utilise/err"));
-
-var log = _interopRequire(require("utilise/log"));
-
-var is = _interopRequire(require("utilise/is"));
-
-var to = _interopRequire(require("utilise/to"));
-
-var za = _interopRequire(require("utilise/za"));
-
-var text = _interopRequire(require("./types/text"));
-
-err = err("[ri/core]");
-log = log("[ri/core]");
+var err = require('utilise/err')('[ri/core]'),
+    log = require('utilise/log')('[ri/core]');

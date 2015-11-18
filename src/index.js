@@ -78,11 +78,9 @@ import identity   from 'utilise/identity'
 import rebind     from 'utilise/rebind'
 import header     from 'utilise/header'
 import values     from 'utilise/values'
-import err        from 'utilise/err'
-import log        from 'utilise/log'
 import is         from 'utilise/is'
 import to         from 'utilise/to'
 import za         from 'utilise/za'
 import text       from './types/text'
-err = err('[ri/core]')
-log = log('[ri/core]')
+var err = require('utilise/err')('[ri/core]')
+  , log = require('utilise/log')('[ri/core]')

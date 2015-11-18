@@ -1,7 +1,7 @@
 var header = require('utilise/header')
   , expect = require('chai').expect
   , is = require('utilise/is')
-  , core = require('./')
+  , core = require('./').default
   , ripple
 
 describe('Core', function() {
