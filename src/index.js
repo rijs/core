@@ -14,7 +14,7 @@
 export default function core(){
   log('creating')
 
-  var resources = {}
+  const resources = {}
   ripple.resources = resources
   ripple.resource  = chainable(ripple)
   ripple.register  = ripple
@@ -34,53 +34,42 @@ export default function core(){
   }
 }
 
-function register(ripple) { 
-  return ({name, body, headers = {}}) => {
-    log('registering', name)
-    var res = normalise(ripple)({ name, body, headers })
+const register = ripple => ({name, body, headers = {}}) => {
+  log('registering', name)
+  const res = normalise(ripple)({ name, body, headers })
       , type = !ripple.resources[name] ? 'load' : ''
 
-    if (!res) return err('failed to register', name), false
-    ripple.resources[name] = res
-    ripple.emit('change', [ripple.resources[name], { type }])
-    return ripple.resources[name].body
-  }
+  if (!res) return err('failed to register', name), false
+  ripple.resources[name] = res
+  ripple.emit('change', [ripple.resources[name], { type }])
+  return ripple.resources[name].body
 }
 
-function normalise(ripple) {
-  return (res) => {
-    if (!header('content-type')(res)) values(ripple.types).sort(za('priority')).some(contentType(res))
-    if (!header('content-type')(res)) return err('could not understand resource', res), false
-    return parse(ripple)(res)
-  }
+const normalise = ripple => res => {
+  if (!header('content-type')(res)) values(ripple.types).sort(za('priority')).some(contentType(res))
+  if (!header('content-type')(res)) return err('could not understand resource', res), false
+  return parse(ripple)(res)
 }
 
-function parse(ripple) {
-  return (res) => {
-    var type = header('content-type')(res)
-    if (!ripple.types[type]) return err('could not understand type', type), false
-    return (ripple.types[type].parse || identity)(res)
-  }
+const parse = ripple => res => {
+  var type = header('content-type')(res)
+  if (!ripple.types[type]) return err('could not understand type', type), false
+  return (ripple.types[type].parse || identity)(res)
 }
 
-function contentType(res){
-  return (type) => type.check(res) && (res.headers['content-type'] = type.header)
-}
+const contentType = res => type => type.check(res) && (res.headers['content-type'] = type.header)
 
-function types() {
-  return [text].reduce(to.obj('header'), 1)
-}
+const types = () => [text].reduce(to.obj('header'), 1)
 
+const err = require('utilise/err')('[ri/core]')
+    , log = require('utilise/log')('[ri/core]')
 import emitterify from 'utilise/emitterify'
 import colorfill  from 'utilise/colorfill'
 import chainable  from 'utilise/chainable'
 import identity   from 'utilise/identity'
-import rebind     from 'utilise/rebind'
 import header     from 'utilise/header'
 import values     from 'utilise/values'
 import is         from 'utilise/is'
 import to         from 'utilise/to'
 import za         from 'utilise/za'
 import text       from './types/text'
-var err = require('utilise/err')('[ri/core]')
-  , log = require('utilise/log')('[ri/core]')

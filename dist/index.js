@@ -21,10 +21,6 @@ var _identity = require('utilise/identity');
 
 var _identity2 = _interopRequireDefault(_identity);
 
-var _rebind = require('utilise/rebind');
-
-var _rebind2 = _interopRequireDefault(_rebind);
-
 var _header = require('utilise/header');
 
 var _header2 = _interopRequireDefault(_header);
@@ -80,7 +76,7 @@ function core() {
   }
 }
 
-function register(ripple) {
+var register = function register(ripple) {
   return function (_ref) {
     var name = _ref.name;
     var body = _ref.body;
@@ -96,33 +92,33 @@ function register(ripple) {
     ripple.emit('change', [ripple.resources[name], { type: type }]);
     return ripple.resources[name].body;
   };
-}
+};
 
-function normalise(ripple) {
+var normalise = function normalise(ripple) {
   return function (res) {
     if (!(0, _header2.default)('content-type')(res)) (0, _values2.default)(ripple.types).sort((0, _za2.default)('priority')).some(contentType(res));
     if (!(0, _header2.default)('content-type')(res)) return err('could not understand resource', res), false;
     return parse(ripple)(res);
   };
-}
+};
 
-function parse(ripple) {
+var parse = function parse(ripple) {
   return function (res) {
     var type = (0, _header2.default)('content-type')(res);
     if (!ripple.types[type]) return err('could not understand type', type), false;
     return (ripple.types[type].parse || _identity2.default)(res);
   };
-}
+};
 
-function contentType(res) {
+var contentType = function contentType(res) {
   return function (type) {
     return type.check(res) && (res.headers['content-type'] = type.header);
   };
-}
+};
 
-function types() {
+var types = function types() {
   return [_text2.default].reduce(_to2.default.obj('header'), 1);
-}
+};
 
 var err = require('utilise/err')('[ri/core]'),
     log = require('utilise/log')('[ri/core]');
