@@ -84,12 +84,11 @@ var register = function register(ripple) {
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
     log('registering', name);
-    var res = normalise(ripple)({ name: name, body: body, headers: headers }),
-        type = !ripple.resources[name] ? 'load' : '';
+    var res = normalise(ripple)({ name: name, body: body, headers: headers });
 
     if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit('change', [ripple.resources[name], { type: type }]);
+    ripple.emit('change', [name, { type: 'update', value: res.body }]);
     return ripple.resources[name].body;
   };
 };

@@ -37,11 +37,10 @@ export default function core(){
 const register = ripple => ({name, body, headers = {}}) => {
   log('registering', name)
   const res = normalise(ripple)({ name, body, headers })
-      , type = !ripple.resources[name] ? 'load' : ''
 
   if (!res) return err('failed to register', name), false
   ripple.resources[name] = res
-  ripple.emit('change', [ripple.resources[name], { type }])
+  ripple.emit('change', [name, { type: 'update', value: res.body }])
   return ripple.resources[name].body
 }
 
@@ -61,8 +60,6 @@ const contentType = res => type => type.check(res) && (res.headers['content-type
 
 const types = () => [text].reduce(to.obj('header'), 1)
 
-const err = require('utilise/err')('[ri/core]')
-    , log = require('utilise/log')('[ri/core]')
 import emitterify from 'utilise/emitterify'
 import colorfill  from 'utilise/colorfill'
 import chainable  from 'utilise/chainable'
@@ -73,3 +70,5 @@ import is         from 'utilise/is'
 import to         from 'utilise/to'
 import za         from 'utilise/za'
 import text       from './types/text'
+const err = require('utilise/err')('[ri/core]')
+    , log = require('utilise/log')('[ri/core]')

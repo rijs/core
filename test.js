@@ -130,9 +130,11 @@ describe('Core', function() {
 
   it('should indicate if new resource', function(done){
     ripple.once('change', function(d, change){
-      expect(change).to.eql({ type: 'load' })
+      expect(d).to.eql('foo')
+      expect(change).to.eql({ type: 'update', value: 'foo' })
       ripple.once('change', function(d, change){
-        expect(change).to.eql({ type: '' })
+        expect(d).to.eql('foo')
+        expect(change).to.eql({ type: 'update', value: 'bar' })
         done()
       })
       ripple('foo', 'bar')
