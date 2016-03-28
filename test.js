@@ -2,36 +2,38 @@ var header = require('utilise/header')
   , expect = require('chai').expect
   , is = require('utilise/is')
   , core = require('./').default
-  , ripple
 
 describe('Core', function() {
-  beforeEach(function(){
-    ripple = core()
-  })
-
+  
   it('should create empty resource from name', function(){  
+    var ripple = core()
     expect(ripple('foo', 'bar')).to.eql('bar')
   })
 
   it('should fail to create resource it does not understand', function(){  
+    var ripple = core()
     expect(ripple('foo')).to.eql(false)
   })
 
   it('should set content-type by default', function(){  
+    var ripple = core()
     ripple('foo', 'bar')
     expect(header('content-type')(ripple.resources['foo'])).to.be.equal('text/plain')
   })
 
   it('should create resource using alias', function(){  
+    var ripple = core()
     expect(ripple.register('foo', 'bar')).to.eql('bar')
   })
 
   it('should create and get resource from name', function(){  
+    var ripple = core()
     ripple('foo', 'bar')
     expect(ripple('foo')).to.eql('bar')
   })
 
   it('should create and get resource from obj', function(){  
+    var ripple = core()
     expect(ripple({ name: 'foo', body: 'bar', headers: {} })).to.eql('bar')
     expect(ripple.resources.foo).to.eql({
       name: 'foo'
@@ -41,6 +43,7 @@ describe('Core', function() {
   })
 
   it('should create import resources from another node', function(){  
+    var ripple = core()
     ripple({ name: 'foo', body: 'bar', headers: {} })
     var ripple2 = core()
     ripple2(ripple)
@@ -52,6 +55,7 @@ describe('Core', function() {
   })
 
   it('should use explicitly set headers', function(){  
+    var ripple = core()
     expect(ripple({
       name: 'sth'
     , body: { a : 1 }
@@ -65,6 +69,7 @@ describe('Core', function() {
   })
 
   it('should support method chaining api', function(){  
+    var ripple = core()
     ripple
       .resource('foo', 'bar')
       .resource('bar', 'foo')
@@ -81,6 +86,7 @@ describe('Core', function() {
   })
 
   it('should register multiple resources', function(){
+    var ripple = core()
     ripple([{name:'foo', body:'1'}, {name:'bar', body:'1'}])
     
     expect('foo' in ripple.resources).to.be.ok
@@ -88,6 +94,7 @@ describe('Core', function() {
   })
 
   it('should destroy existing headers by default', function(){
+    var ripple = core()
     ripple({ name: 'name', body: 'foo', headers: { 'foo': 'bar' }})
     expect(ripple.resources.name.headers.foo).to.be.eql('bar')
 
@@ -96,6 +103,7 @@ describe('Core', function() {
   })
 
   it('should fail if cannot interpret resource', function(){
+    var ripple = core()
     expect(ripple('foo', [])).to.not.be.ok
     expect(ripple('bar')).to.not.be.ok
 
@@ -104,31 +112,40 @@ describe('Core', function() {
   })
 
   it('should fail if uses api incorrectly', function(){
+    var ripple = core()
     expect(ripple()).to.be.eql(ripple)
     expect(ripple(String)).to.not.be.ok
     expect(ripple.resources).to.eql({})
   })
 
   it('should skip empty objects', function(){
+    var ripple = core()
     expect(ripple({})).to.be.eql(ripple)
     expect(ripple.resources).to.eql({})
   })
 
   it('should not register type it does not understand', function(){
+    var ripple = core()
     expect(ripple({ name: 'foo', body: 'foo', headers: { 'content-type': 'application/jsx' }})).to.not.be.ok
     expect(ripple.resources).to.eql({})
   })
 
   it('should emit global change events', function(){
-    var called = 0
-      , fn = function(){ called++ }
+    var ripple = core()
+      , params
+      , fn = function(name, change){ params = [name, change] }
 
     ripple.on('change', fn)
     ripple('foo', 'bar')
-    expect(called).to.equal(1)
+    expect(params).to.eql(['foo', { type: 'update', value: 'bar' }])
+
+    ripple.types['data'] = { header: 'data', check: String }
+    ripple('boo', { log: ['baz'] })
+    expect(params).to.eql(['boo', 'baz'])
   })
 
   it('should indicate if new resource', function(done){
+    var ripple = core()
     ripple.once('change', function(d, change){
       expect(d).to.eql('foo')
       expect(change).to.eql({ type: 'update', value: 'foo' })
@@ -143,6 +160,7 @@ describe('Core', function() {
   })
 
   it('should register new types by order', function(){
+    var ripple = core()
     ripple('text', 'text')
     expect(ripple.resources.text.headers['content-type']).to.eql('text/plain')
 

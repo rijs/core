@@ -29,6 +29,10 @@ var _values = require('utilise/values');
 
 var _values2 = _interopRequireDefault(_values);
 
+var _last = require('utilise/last');
+
+var _last2 = _interopRequireDefault(_last);
+
 var _is = require('utilise/is');
 
 var _is2 = _interopRequireDefault(_is);
@@ -88,7 +92,7 @@ var register = function register(ripple) {
 
     if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit('change', [name, { type: 'update', value: res.body }]);
+    ripple.emit('change', [name, res.body.log ? (0, _last2.default)(res.body.log) : { type: 'update', value: res.body }]);
     return ripple.resources[name].body;
   };
 };
