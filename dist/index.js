@@ -29,9 +29,9 @@ var _values = require('utilise/values');
 
 var _values2 = _interopRequireDefault(_values);
 
-var _last = require('utilise/last');
+var _key = require('utilise/key');
 
-var _last2 = _interopRequireDefault(_last);
+var _key2 = _interopRequireDefault(_key);
 
 var _is = require('utilise/is');
 
@@ -92,7 +92,11 @@ var register = function register(ripple) {
 
     if (!res) return err('failed to register', name), false;
     ripple.resources[name] = res;
-    ripple.emit('change', [name, res.body.log ? (0, _last2.default)(res.body.log) : { type: 'update', value: res.body }]);
+    ripple.emit('change', [name, {
+      type: 'update',
+      value: res.body,
+      time: now(res)
+    }]);
     return ripple.resources[name].body;
   };
 };
@@ -124,4 +128,7 @@ var types = function types() {
 };
 
 var err = require('utilise/err')('[ri/core]'),
-    log = require('utilise/log')('[ri/core]');
+    log = require('utilise/log')('[ri/core]'),
+    now = function now(d, t) {
+  return t = (0, _key2.default)('body.log.length')(d), _is2.default.num(t) ? t - 1 : t;
+};

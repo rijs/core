@@ -137,21 +137,21 @@ describe('Core', function() {
 
     ripple.on('change', fn)
     ripple('foo', 'bar')
-    expect(params).to.eql(['foo', { type: 'update', value: 'bar' }])
+    expect(params).to.eql(['foo', { type: 'update', value: 'bar', time: undefined }])
 
     ripple.types['data'] = { header: 'data', check: String }
     ripple('boo', { log: ['baz'] })
-    expect(params).to.eql(['boo', 'baz'])
+    expect(params).to.eql(['boo', { type: 'update', value: { log: ['baz'] }, time: 0 }])
   })
 
   it('should indicate if new resource', function(done){
     var ripple = core()
     ripple.once('change', function(d, change){
       expect(d).to.eql('foo')
-      expect(change).to.eql({ type: 'update', value: 'foo' })
+      expect(change).to.eql({ type: 'update', value: 'foo', time: undefined })
       ripple.once('change', function(d, change){
         expect(d).to.eql('foo')
-        expect(change).to.eql({ type: 'update', value: 'bar' })
+        expect(change).to.eql({ type: 'update', value: 'bar', time: undefined })
         done()
       })
       ripple('foo', 'bar')

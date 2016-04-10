@@ -40,10 +40,11 @@ const register = ripple => ({name, body, headers = {}}) => {
 
   if (!res) return err('failed to register', name), false
   ripple.resources[name] = res
-  ripple.emit('change', [name, res.body.log
-    ? last(res.body.log)
-    : { type: 'update', value: res.body }
-  ])
+  ripple.emit('change', [name, { 
+    type: 'update'
+  , value: res.body
+  , time: now(res)
+  }])
   return ripple.resources[name].body
 }
 
@@ -69,10 +70,11 @@ import chainable  from 'utilise/chainable'
 import identity   from 'utilise/identity'
 import header     from 'utilise/header'
 import values     from 'utilise/values'
-import last       from 'utilise/last'
+import key        from 'utilise/key'
 import is         from 'utilise/is'
 import to         from 'utilise/to'
 import za         from 'utilise/za'
 import text       from './types/text'
 const err = require('utilise/err')('[ri/core]')
     , log = require('utilise/log')('[ri/core]')
+    , now = (d, t) => (t = key('body.log.length')(d), is.num(t) ? t - 1 : t)
