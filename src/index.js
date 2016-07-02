@@ -64,9 +64,12 @@ const contentType = res => type => type.check(res) && (res.headers['content-type
 
 const types = () => [text].reduce(to.obj('header'), 1)
 
+const chainable = fn => function() {
+  return fn.apply(this, arguments), fn
+}
+
 import emitterify from 'utilise/emitterify'
 import colorfill  from 'utilise/colorfill'
-import chainable  from 'utilise/chainable'
 import identity   from 'utilise/identity'
 import header     from 'utilise/header'
 import values     from 'utilise/values'

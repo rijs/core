@@ -13,10 +13,6 @@ var _colorfill = require('utilise/colorfill');
 
 var _colorfill2 = _interopRequireDefault(_colorfill);
 
-var _chainable = require('utilise/chainable');
-
-var _chainable2 = _interopRequireDefault(_chainable);
-
 var _identity = require('utilise/identity');
 
 var _identity2 = _interopRequireDefault(_identity);
@@ -70,7 +66,7 @@ function core() {
 
   var resources = {};
   ripple.resources = resources;
-  ripple.resource = (0, _chainable2.default)(ripple);
+  ripple.resource = chainable(ripple);
   ripple.register = ripple;
   ripple.types = types();
   return (0, _emitterify2.default)(ripple);
@@ -125,6 +121,12 @@ var contentType = function contentType(res) {
 
 var types = function types() {
   return [_text2.default].reduce(_to2.default.obj('header'), 1);
+};
+
+var chainable = function chainable(fn) {
+  return function () {
+    return fn.apply(this, arguments), fn;
+  };
 };
 
 var err = require('utilise/err')('[ri/core]'),
