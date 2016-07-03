@@ -24,7 +24,7 @@ export default function core(){
   function ripple(name, body, headers){
     return !name                                     ? ripple
          : is.arr(name)                              ? name.map(ripple)
-         : is.obj(name) && !name.name                ? ripple
+         : is.obj(name) && !name.name                ? ripple(values(name))
          : is.fn(name)  &&  name.resources           ? ripple(values(name.resources))
          : is.str(name) && !body &&  resources[name] ? resources[name].body
          : is.str(name) && !body && !resources[name] ? register(ripple)({ name })

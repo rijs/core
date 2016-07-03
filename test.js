@@ -42,6 +42,18 @@ describe('Core', function() {
     })
   })
 
+  it('should import multiple resources from object', function(){  
+    var ripple = core()
+    expect(ripple({ 
+      foo: { name: 'foo', body: 'foo', headers: {} }
+    , bar: { name: 'bar', body: 'bar', headers: {} }
+    })).to.eql([ 'foo', 'bar' ])
+
+    expect(ripple.resources).to.eql({ 
+      foo: { name: 'foo', body: 'foo', headers: { 'content-type': 'text/plain' } }
+    , bar: { name: 'bar', body: 'bar', headers: { 'content-type': 'text/plain' } }
+    })
+  })
   it('should create import resources from another node', function(){  
     var ripple = core()
     ripple({ name: 'foo', body: 'bar', headers: {} })
@@ -120,7 +132,7 @@ describe('Core', function() {
 
   it('should skip empty objects', function(){
     var ripple = core()
-    expect(ripple({})).to.be.eql(ripple)
+    expect(ripple({})).to.be.eql([])
     expect(ripple.resources).to.eql({})
   })
 
