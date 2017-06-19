@@ -24,6 +24,7 @@ export default function core(){
   function ripple(name, body, headers){
     return !name                                     ? ripple
          : is.arr(name)                              ? name.map(ripple)
+         : is.promise(name)                          ? name.then(ripple).catch(err)
          : is.obj(name) && !name.name                ? ripple(values(name))
          : is.fn(name)  &&  name.resources           ? ripple(values(name.resources))
          : is.str(name) && !body &&  resources[name] ? resources[name].body
@@ -36,6 +37,7 @@ export default function core(){
 
 const register = ripple => ({name, body, headers = {}}) => {
   log('registering', name)
+  if (is.promise(body)) return body.then(body => register(ripple)({ name, body, headers })).catch(err)
   const res = normalise(ripple)({ name, body, headers })
 
   if (!res) return err('failed to register', name), false

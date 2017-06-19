@@ -193,7 +193,36 @@ describe('Core', function() {
 
     ripple('high', 'high')
     expect(ripple.resources.high.headers['content-type']).to.eql('priority/high')
-
   })  
+
+  it('should register promise - resource', function(done){
+    var ripple = core()
+    ripple(Promise.resolve({ name:'foo', body: 'bar' }))
+      .then(d => expect('foo' in ripple.resources).to.be.ok)
+      .then(d => expect(ripple.resources.foo.body).to.be.eql('bar'))
+      .then(d => done())
+
+    expect('foo' in ripple.resources).to.not.be.ok
+  })
+
+  it('should register promise - body 1', function(done){
+    var ripple = core()
+    ripple('foo', Promise.resolve('bar'))
+      .then(d => expect('foo' in ripple.resources).to.be.ok)
+      .then(d => expect(ripple.resources.foo.body).to.be.eql('bar'))
+      .then(d => done())
+
+    expect('foo' in ripple.resources).to.not.be.ok
+  })
+
+  it('should register promise - body 2', function(done){
+    var ripple = core()
+    ripple({ name: 'foo', body: Promise.resolve('bar') })
+      .then(d => expect('foo' in ripple.resources).to.be.ok)
+      .then(d => expect(ripple.resources.foo.body).to.be.eql('bar'))
+      .then(d => done())
+
+    expect('foo' in ripple.resources).to.not.be.ok
+  })
 
 })
