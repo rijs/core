@@ -1,53 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = core;
-
-var _emitterify = require('utilise/emitterify');
-
-var _emitterify2 = _interopRequireDefault(_emitterify);
-
-var _colorfill = require('utilise/colorfill');
-
-var _colorfill2 = _interopRequireDefault(_colorfill);
-
-var _identity = require('utilise/identity');
-
-var _identity2 = _interopRequireDefault(_identity);
-
-var _header = require('utilise/header');
-
-var _header2 = _interopRequireDefault(_header);
-
-var _values = require('utilise/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _key = require('utilise/key');
-
-var _key2 = _interopRequireDefault(_key);
-
-var _is = require('utilise/is');
-
-var _is2 = _interopRequireDefault(_is);
-
-var _to = require('utilise/to');
-
-var _to2 = _interopRequireDefault(_to);
-
-var _za = require('utilise/za');
-
-var _za2 = _interopRequireDefault(_za);
-
-var _text = require('./types/text');
-
-var _text2 = _interopRequireDefault(_text);
-
-/* istanbul ignore next */
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 // -------------------------------------------
 // API: Gets or sets a resource
 // -------------------------------------------
@@ -61,7 +13,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-function core() {
+module.exports = function core() {
   log('creating');
 
   var resources = {};
@@ -69,12 +21,12 @@ function core() {
   ripple.resource = chainable(ripple);
   ripple.register = ripple;
   ripple.types = types();
-  return (0, _emitterify2.default)(ripple);
+  return emitterify(ripple);
 
   function ripple(name, body, headers) {
-    return !name ? ripple : _is2.default.arr(name) ? name.map(ripple) : _is2.default.promise(name) ? name.then(ripple).catch(err) : _is2.default.obj(name) && !name.name ? ripple((0, _values2.default)(name)) : _is2.default.fn(name) && name.resources ? ripple((0, _values2.default)(name.resources)) : _is2.default.str(name) && !body && resources[name] ? resources[name].body : _is2.default.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : _is2.default.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : _is2.default.obj(name) && !_is2.default.arr(name) ? register(ripple)(name) : (err('could not find or create resource', name), false);
+    return !name ? ripple : is.arr(name) ? name.map(ripple) : is.promise(name) ? name.then(ripple).catch(err) : is.obj(name) && !name.name ? ripple(values(name)) : is.fn(name) && name.resources ? ripple(values(name.resources)) : is.str(name) && !body && resources[name] ? resources[name].body : is.str(name) && !body && !resources[name] ? register(ripple)({ name: name }) : is.str(name) && body ? register(ripple)({ name: name, body: body, headers: headers }) : is.obj(name) && !is.arr(name) ? register(ripple)(name) : (err('could not find or create resource', name), false);
   }
-}
+};
 
 var register = function register(ripple) {
   return function (_ref) {
@@ -84,7 +36,7 @@ var register = function register(ripple) {
     var headers = _ref$headers === undefined ? {} : _ref$headers;
 
     log('registering', name);
-    if (_is2.default.promise(body)) return body.then(function (body) {
+    if (is.promise(body)) return body.then(function (body) {
       return register(ripple)({ name: name, body: body, headers: headers });
     }).catch(err);
     var res = normalise(ripple)({ name: name, body: body, headers: headers });
@@ -102,17 +54,17 @@ var register = function register(ripple) {
 
 var normalise = function normalise(ripple) {
   return function (res) {
-    if (!(0, _header2.default)('content-type')(res)) (0, _values2.default)(ripple.types).sort((0, _za2.default)('priority')).some(contentType(res));
-    if (!(0, _header2.default)('content-type')(res)) return err('could not understand resource', res), false;
+    if (!header('content-type')(res)) values(ripple.types).sort(za('priority')).some(contentType(res));
+    if (!header('content-type')(res)) return err('could not understand resource', res), false;
     return parse(ripple)(res);
   };
 };
 
 var parse = function parse(ripple) {
   return function (res) {
-    var type = (0, _header2.default)('content-type')(res);
+    var type = header('content-type')(res);
     if (!ripple.types[type]) return err('could not understand type', type), false;
-    return (ripple.types[type].parse || _identity2.default)(res);
+    return (ripple.types[type].parse || identity)(res);
   };
 };
 
@@ -123,7 +75,7 @@ var contentType = function contentType(res) {
 };
 
 var types = function types() {
-  return [_text2.default].reduce(_to2.default.obj('header'), 1);
+  return [text].reduce(to.obj('header'), 1);
 };
 
 var chainable = function chainable(fn) {
@@ -132,8 +84,18 @@ var chainable = function chainable(fn) {
   };
 };
 
-var err = require('utilise/err')('[ri/core]'),
+var emitterify = require('utilise/emitterify'),
+    colorfill = require('utilise/colorfill'),
+    identity = require('utilise/identity'),
+    header = require('utilise/header'),
+    values = require('utilise/values'),
+    key = require('utilise/key'),
+    is = require('utilise/is'),
+    to = require('utilise/to'),
+    za = require('utilise/za'),
+    text = require('./types/text'),
+    err = require('utilise/err')('[ri/core]'),
     log = require('utilise/log')('[ri/core]'),
     now = function now(d, t) {
-  return t = (0, _key2.default)('body.log.length')(d), _is2.default.num(t) ? t - 1 : t;
+  return t = key('body.log.length')(d), is.num(t) ? t - 1 : t;
 };

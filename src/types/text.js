@@ -1,7 +1,7 @@
-export default {
+module.exports = {
   header: 'text/plain'
 , check(res){ return !includes('.html')(res.name) && !includes('.css')(res.name) && is.str(res.body) }
 }
 
-import includes from 'utilise/includes'
-import is from 'utilise/is'
+const includes = require('utilise/includes')
+    , is = require('utilise/is')
