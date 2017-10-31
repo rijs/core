@@ -1,7 +1,7 @@
 {
   "name": "rijs.core",
   "version": "1.0.0",
-  "main": "dist",
+  "main": "index",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "description": "Ripple Core",
   "repository": {
@@ -9,10 +9,10 @@
     "url": "git://github.com/rijs/core.git"
   },
   "scripts": {
-    "ignore": "find ./dist -type f -exec sed -i \"s/function _interopRequire/\\/* istanbul ignore next *\\/\\nfunction _interopRequire/g\" {} ;",
-    "babel": "babel src -d dist",
-    "clean": "rm -rf dist && mkdir dist",
-    "build": "npm run clean && npm run babel && npm run ignore",
+    "build": "npm run rollup && npm run minify && npm run gzip",
+    "rollup": "rollup -c",
+    "minify": "uglifyjs client.bundle.js -m -c keep_fargs=false > client.min.js",
+    "gzip": "gzip -c client.min.js > client.min.js.gz",
     "test": "istanbul test ./node_modules/mocha/bin/_mocha --report html -- -R spec",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && rm -rf ./coverage",
     "cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec",
@@ -24,15 +24,16 @@
   },
   "license": "pemrouz.mit-license.org",
   "devDependencies": {
-    "babel-cli": "*",
-    "babel-preset-es2015": "*",
-    "browserify": "*",
     "chai": "*",
     "coveralls": "*",
     "istanbul": "*",
     "mocha": "*",
     "mocha-lcov-reporter": "*",
-    "uglify-js": "*"
+    "rollup": "*",
+    "rollup-plugin-buble": "^0.16.0",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "uglify-es": "*"
   },
   "dependencies": {
     "colors": "^1.1.0",

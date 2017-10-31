@@ -11,7 +11,7 @@
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-export default function core(){
+module.exports = function core(){
   log('creating')
 
   const resources = {}
@@ -22,15 +22,15 @@ export default function core(){
   return emitterify(ripple)
 
   function ripple(name, body, headers){
-    return !name                                     ? ripple
-         : is.arr(name)                              ? name.map(ripple)
-         : is.promise(name)                          ? name.then(ripple).catch(err)
-         : is.obj(name) && !name.name                ? ripple(values(name))
-         : is.fn(name)  &&  name.resources           ? ripple(values(name.resources))
-         : is.str(name) && !body &&  resources[name] ? resources[name].body
-         : is.str(name) && !body && !resources[name] ? register(ripple)({ name })
-         : is.str(name) &&  body                     ? register(ripple)({ name, body, headers })
-         : is.obj(name) && !is.arr(name)             ? register(ripple)(name)
+    return !name                                            ? ripple
+         : is.arr(name)                                     ? name.map(ripple)
+         : is.promise(name)                                 ? name.then(ripple).catch(err)
+         : is.obj(name) && !name.name                       ? ripple(values(name))
+         : is.fn(name)  &&  name.resources                  ? ripple(values(name.resources))
+         : is.str(name) && !body &&  ripple.resources[name] ? ripple.resources[name].body
+         : is.str(name) && !body && !ripple.resources[name] ? undefined //register(ripple)({ name })
+         : is.str(name) &&  body                            ? register(ripple)({ name, body, headers })
+         : is.obj(name) && !is.arr(name)                    ? register(ripple)(name)
          : (err('could not find or create resource', name), false)
   }
 }
@@ -70,16 +70,16 @@ const chainable = fn => function() {
   return fn.apply(this, arguments), fn
 }
 
-import emitterify from 'utilise/emitterify'
-import colorfill  from 'utilise/colorfill'
-import identity   from 'utilise/identity'
-import header     from 'utilise/header'
-import values     from 'utilise/values'
-import key        from 'utilise/key'
-import is         from 'utilise/is'
-import to         from 'utilise/to'
-import za         from 'utilise/za'
-import text       from './types/text'
-const err = require('utilise/err')('[ri/core]')
+const emitterify = require('utilise/emitterify')
+    , colorfill  = require('utilise/colorfill')
+    , identity   = require('utilise/identity')
+    , header     = require('utilise/header')
+    , values     = require('utilise/values')
+    , key        = require('utilise/key')
+    , is         = require('utilise/is')
+    , to         = require('utilise/to')
+    , za         = require('utilise/za')
+    , text       = require('./types/text')
+    , err = require('utilise/err')('[ri/core]')
     , log = require('utilise/log')('[ri/core]')
     , now = (d, t) => (t = key('body.log.length')(d), is.num(t) ? t - 1 : t)

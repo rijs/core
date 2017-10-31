@@ -1,7 +1,7 @@
 var header = require('utilise/header')
   , expect = require('chai').expect
   , is = require('utilise/is')
-  , core = require('./').default
+  , core = require('./')
 
 describe('Core', function() {
   
@@ -12,7 +12,7 @@ describe('Core', function() {
 
   it('should fail to create resource it does not understand', function(){  
     var ripple = core()
-    expect(ripple('foo')).to.eql(false)
+    expect(ripple('foo')).to.be.not.ok
   })
 
   it('should set content-type by default', function(){  
