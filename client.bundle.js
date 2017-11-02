@@ -1,6 +1,16 @@
 var core = (function () {
 'use strict';
 
+var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
 var promise_1 = promise;
 
 function promise() {
@@ -394,11 +404,9 @@ var text = {
 , check: function check(res){ return !includes('.html')(res.name) && !includes('.css')(res.name) && is_1.str(res.body) }
 };
 
-var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
 var owner = client ? /* istanbul ignore next */ window : commonjsGlobal;
 
-var err$1 = function err(ns){
+var err = function err(ns){
   return function(d){
     if (!owner.console || !console.error.apply) { return d; }
     is_1.arr(arguments[2]) && (arguments[2] = arguments[2].length);
@@ -410,7 +418,7 @@ var err$1 = function err(ns){
   }
 };
 
-var log$1 = function log(ns){
+var log = function log(ns){
   return function(d){
     if (!owner.console || !console.log.apply) { return d; }
     is_1.arr(arguments[2]) && (arguments[2] = arguments[2].length);
@@ -422,6 +430,7 @@ var log$1 = function log(ns){
   }
 };
 
+var core = createCommonjsModule(function (module) {
 // -------------------------------------------
 // API: Gets or sets a resource
 // -------------------------------------------
@@ -435,8 +444,8 @@ var log$1 = function log(ns){
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-var index = function core(){
-  log('creating');
+module.exports = function core(){
+  log$$1('creating');
 
   var resources = {};
   ripple.resources = resources;
@@ -448,14 +457,14 @@ var index = function core(){
   function ripple(name, body, headers){
     return !name                                            ? ripple
          : is_1.arr(name)                                     ? name.map(ripple)
-         : is_1.promise(name)                                 ? name.then(ripple).catch(err)
+         : is_1.promise(name)                                 ? name.then(ripple).catch(err$$1)
          : is_1.obj(name) && !name.name                       ? ripple(values(name))
          : is_1.fn(name)  &&  name.resources                  ? ripple(values(name.resources))
          : is_1.str(name) && !body &&  ripple.resources[name] ? ripple.resources[name].body
          : is_1.str(name) && !body && !ripple.resources[name] ? undefined //register(ripple)({ name })
          : is_1.str(name) &&  body                            ? register(ripple)({ name: name, body: body, headers: headers })
          : is_1.obj(name) && !is_1.arr(name)                    ? register(ripple)(name)
-         : (err('could not find or create resource', name), false)
+         : (err$$1('could not find or create resource', name), false)
   }
 };
 
@@ -464,11 +473,11 @@ var register = function (ripple) { return function (ref) {
   var body = ref.body;
   var headers = ref.headers; if ( headers === void 0 ) headers = {};
 
-  log('registering', name);
-  if (is_1.promise(body)) { return body.then(function (body) { return register(ripple)({ name: name, body: body, headers: headers }); }).catch(err) }
+  log$$1('registering', name);
+  if (is_1.promise(body)) { return body.then(function (body) { return register(ripple)({ name: name, body: body, headers: headers }); }).catch(err$$1) }
   var res = normalise(ripple)({ name: name, body: body, headers: headers });
 
-  if (!res) { return err('failed to register', name), false }
+  if (!res) { return err$$1('failed to register', name), false }
   ripple.resources[name] = res;
   ripple.emit('change', [name, { 
     type: 'update'
@@ -480,13 +489,13 @@ var register = function (ripple) { return function (ref) {
 
 var normalise = function (ripple) { return function (res) {
   if (!header('content-type')(res)) { values(ripple.types).sort(za('priority')).some(contentType(res)); }
-  if (!header('content-type')(res)) { return err('could not understand resource', res), false }
+  if (!header('content-type')(res)) { return err$$1('could not understand resource', res), false }
   return parse(ripple)(res)
 }; };
 
 var parse = function (ripple) { return function (res) {
   var type = header('content-type')(res);
-  if (!ripple.types[type]) { return err('could not understand type', type), false }
+  if (!ripple.types[type]) { return err$$1('could not understand type', type), false }
   return (ripple.types[type].parse || identity)(res)
 }; };
 
@@ -498,10 +507,11 @@ var chainable = function (fn) { return function() {
   return fn.apply(this, arguments), fn
 }; };
 
-var err = err$1('[ri/core]');
-var log = log$1('[ri/core]');
-var now = function (d, t) { return (t = key('body.log.length')(d), is_1.num(t) ? t - 1 : t); };
+var err$$1 = err('[ri/core]')
+    , log$$1 = log('[ri/core]')
+    , now = function (d, t) { return (t = key('body.log.length')(d), is_1.num(t) ? t - 1 : t); };
+});
 
-return index;
+return core;
 
 }());
