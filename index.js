@@ -6,20 +6,18 @@
 // ripple('name', {}) - creates & returns resource, with specified name and body
 // ripple({ ... })    - creates & returns resource, with specified name, body and headers
 // ripple.resources   - returns raw resources
-// ripple.resource    - alias for ripple, returns ripple instead of resource for method chaining
 // ripple.register    - alias for ripple
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-module.exports = function core(){
+module.exports = function core({ aliases = {} } = {}){
   log('creating')
 
-  const resources = {}
-  ripple.resources = resources
-  ripple.resource  = chainable(ripple)
+  ripple.resources = {}
+  ripple.link      = link(ripple)
   ripple.register  = ripple
   ripple.types     = types()
-  return emitterify(ripple)
+  return linkify(emitterify(ripple), aliases)
 
   function ripple(name, body, headers){
     return !name                                            ? ripple
@@ -28,16 +26,17 @@ module.exports = function core(){
          : is.obj(name) && !name.name                       ? ripple(values(name))
          : is.fn(name)  &&  name.resources                  ? ripple(values(name.resources))
          : is.str(name) && !body &&  ripple.resources[name] ? ripple.resources[name].body
-         : is.str(name) && !body && !ripple.resources[name] ? undefined //register(ripple)({ name })
+         : is.str(name) && !body && !ripple.resources[name] ? undefined
          : is.str(name) &&  body                            ? register(ripple)({ name, body, headers })
-         : is.obj(name) && !is.arr(name)                    ? register(ripple)(name)
+         : is.obj(name)                                     ? register(ripple)(name)
          : (err('could not find or create resource', name), false)
   }
 }
 
-const register = ripple => ({name, body, headers = {}}) => {
-  log('registering', name)
+const register = ripple => ({ name, body, headers = {} }) => {
+  name = ripple.aliases.src[name] || name
   if (is.promise(body)) return body.then(body => register(ripple)({ name, body, headers })).catch(err)
+  log('registering', name)
   const res = normalise(ripple)({ name, body, headers })
 
   if (!res) return err('failed to register', name), false
@@ -47,6 +46,7 @@ const register = ripple => ({name, body, headers = {}}) => {
   , value: res.body
   , time: now(res)
   }])
+
   return ripple.resources[name].body
 }
 
@@ -66,8 +66,20 @@ const contentType = res => type => type.check(res) && (res.headers['content-type
 
 const types = () => [text].reduce(to.obj('header'), 1)
 
-const chainable = fn => function() {
-  return fn.apply(this, arguments), fn
+const linkify = (ripple, aliases) => {
+  ripple.aliases = { dst: {}, src: {} }
+  for (const name in aliases)
+    ripple.link(aliases[name], name)
+  return ripple
+}
+
+const link = ripple => (from, to) => {
+  ripple.aliases.src[from] = to
+  ripple.aliases.dst[to] = from
+  Object.defineProperty(ripple.resources, from, { 
+    get(){ return ripple.resources[to] } 
+  , set(value){ ripple.resources[to] = value } 
+  })
 }
 
 const emitterify = require('utilise/emitterify')

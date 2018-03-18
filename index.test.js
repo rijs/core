@@ -231,3 +231,19 @@ test('should register promise - body 2', ({ plan, same }) => {
   same('foo' in ripple.resources, false)
 })
 
+test('should link resource', ({ plan, same }) => {
+  plan(5)
+  const ripple = core({ aliases: { bar: 'foo' }})
+  same(ripple.aliases, { 
+    src: { 'foo': 'bar' }
+  , dst: { 'bar': 'foo' }
+  })
+
+  ripple('bar', 'bar')
+  same(ripple('foo'), 'bar')
+  same(ripple('bar'), 'bar')
+
+  ripple('foo', 'foo')
+  same(ripple('foo'), 'foo')
+  same(ripple('bar'), 'foo')
+})
