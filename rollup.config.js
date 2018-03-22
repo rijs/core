@@ -3,10 +3,12 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import buble from 'rollup-plugin-buble'
 
 export default {
-  entry: 'index.js'
-, dest: 'client.bundle.js'
-, format: 'iife'
-, moduleName: 'core'
+  input: 'index.js'
+, output: {
+    file: 'client.bundle.js'
+  , format: 'iife'
+  , name: 'core'
+  }
 , plugins: [
     nodeResolve({ browser: true })
   , commonjs()
