@@ -42,8 +42,11 @@ var def = function def(o, p, v, w){
   return o[p]
 };
 
-var emitterify = function emitterify(body) {
+var noop = function(){};
+
+var emitterify = function emitterify(body, hooks) {
   body = body || {};
+  hooks = hooks || {};
   def(body, 'emit', emit, 1);
   def(body, 'once', once, 1);
   def(body, 'off', off, 1);
@@ -87,7 +90,8 @@ var emitterify = function emitterify(body) {
       cb.isOnce = isOnce;
       cb.type = id;
       if (ns) { body.on[id]['$'+(cb.ns = ns)] = cb; }
-      li.push(cb);
+      li.push(cb)
+      ;(hooks.on || noop)(cb);
       return cb.next ? cb : body
     }
   }
@@ -100,7 +104,7 @@ var emitterify = function emitterify(body) {
     var i = li.length;
     while (~--i) 
       { if (cb == li[i] || cb == li[i].fn || !cb)
-        { li.splice(i, 1); } }
+        { (hooks.off || noop)(li.splice(i, 1)[0]); } }
   }
 
   function off(type, cb) {
@@ -119,9 +123,10 @@ var emitterify = function emitterify(body) {
     o.source = opts.fn ? o.parent.source : o;
     
     o.on('stop', function(reason){
-      return o.type
+      o.type
         ? o.parent.off(o.type, o)
-        : o.parent.off(o)
+        : o.parent.off(o);
+      return o.reason = reason
     });
 
     o.each = function(fn) {
@@ -160,7 +165,7 @@ var emitterify = function emitterify(body) {
     };
 
     o.until = function(stop){
-      stop.each(function(){ o.source.emit('stop'); });
+      (stop.each || stop.then).call(stop, function(reason){ return o.source.emit('stop', reason) });
       return o
     };
 
@@ -168,18 +173,26 @@ var emitterify = function emitterify(body) {
       return remove(o.li, fn), o
     };
 
-    o[Symbol.asyncIterator] = function(){ return { 
-      next: function () { return (o.wait = new Promise(function (resolve) {
-        o.wait = true;
-        o.map(function (d, i, n) {
-          delete o.wait;
-          o.off(n);
-          resolve({ value: d, done: false });
-        });
+    o.start = function(fn){
+      o.source.emit('start');
+      return o
+    };
 
-        o.emit('pull', o);
-      })); }
-    }};
+    o[Symbol.asyncIterator] = function(){ 
+      return { 
+        next: function(){ 
+          return o.wait = new Promise(function(resolve){
+            o.wait = true;
+            o.map(function(d, i, n){
+              delete o.wait;
+              o.off(n);
+              resolve({ value: d, done: false });
+            });
+            o.emit('pull', o);
+          })
+        }
+      }
+    };
 
     return o
   }
@@ -230,8 +243,7 @@ function isObject(d) {
 }
 
 function isLiteral(d) {
-  return typeof d == 'object' 
-      && !(d instanceof Array)
+  return d.constructor == Object
 }
 
 function isTruthy(d) {
@@ -293,6 +305,10 @@ var wrap = function wrap(d){
   }
 };
 
+var keys = function keys(o) { 
+  return Object.keys(is_1.obj(o) || is_1.fn(o) ? o : {})
+};
+
 var str = function str(d){
   return d === 0 ? '0'
        : !d ? ''
@@ -303,24 +319,33 @@ var str = function str(d){
 
 var key = function key(k, v){ 
   var set = arguments.length > 1
-    , keys = is_1.fn(k) ? [] : str(k).split('.')
-    , root = keys.shift();
+    , keys$$1 = is_1.fn(k) ? [] : str(k).split('.').filter(Boolean)
+    , root = keys$$1.shift();
 
   return function deep(o, i){
     var masked = {};
     
     return !o ? undefined 
-         : !is_1.num(k) && !k ? o
+         : !is_1.num(k) && !k ? (set ? replace(o, v) : o)
          : is_1.arr(k) ? (k.map(copy), masked)
-         : o[k] || !keys.length ? (set ? ((o[k] = is_1.fn(v) ? v(o[k], i) : v), o)
+         : o[k] || !keys$$1.length ? (set ? ((o[k] = is_1.fn(v) ? v(o[k], i) : v), o)
                                        :  (is_1.fn(k) ? k(o) : o[k]))
-                                : (set ? (key(keys.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
-                                       :  key(keys.join('.'))(o[root]))
+                                : (set ? (key(keys$$1.join('.'), v)(o[root] ? o[root] : (o[root] = {})), o)
+                                       :  key(keys$$1.join('.'))(o[root]))
 
     function copy(k){
       var val = key(k)(o);
-      if (val != undefined) 
+      val = is_1.fn(v)       ? v(val) 
+          : val == undefined ? v
+                           : val;
+    if (val != undefined) 
         { key(k, is_1.fn(val) ? wrap(val) : val)(masked); }
+    }
+
+    function replace(o, v) {
+      keys(o).map(function(k){ delete o[k]; });
+      keys(v).map(function(k){ o[k] = v[k]; });
+      return o
     }
   }
 };
@@ -332,10 +357,6 @@ var header = function header(header$1, value) {
          : getter ? key(header$1)(d.headers)
                   : key(header$1)(d.headers) == value
   }
-};
-
-var keys = function keys(o) { 
-  return Object.keys(is_1.obj(o) || is_1.fn(o) ? o : {})
 };
 
 var datum = function datum(node){
@@ -382,16 +403,22 @@ function toObject(d) {
   }
 }
 
-var za = function za(k) {
+var za = function az() {
+  return compare(to.arr(arguments))
+};
+
+function compare(keys){ 
   return function(a, b){
-    var ka = key(k)(a) || ''
+    if (!keys.length) { return 0 }
+    var k = keys[0]
+      , ka = key(k)(a) || ''
       , kb = key(k)(b) || '';
 
-    return ka > kb ? -1 
-         : ka < kb ?  1 
-                   :  0
+    return ka < kb ?  1 
+         : ka > kb ? -1 
+         : compare(keys.slice(1))(a, b)
   }
-};
+}
 
 var includes = function includes(pattern){
   return function(d){
@@ -439,20 +466,21 @@ var core = createCommonjsModule(function (module) {
 // ripple('name', {}) - creates & returns resource, with specified name and body
 // ripple({ ... })    - creates & returns resource, with specified name, body and headers
 // ripple.resources   - returns raw resources
-// ripple.resource    - alias for ripple, returns ripple instead of resource for method chaining
 // ripple.register    - alias for ripple
 // ripple.on          - event listener for changes - all resources
 // ripple('name').on  - event listener for changes - resource-specific
 
-module.exports = function core(){
+module.exports = function core(ref){
+  if ( ref === void 0 ) ref = {};
+  var aliases = ref.aliases; if ( aliases === void 0 ) aliases = {};
+
   log$$1('creating');
 
-  var resources = {};
-  ripple.resources = resources;
-  ripple.resource  = chainable(ripple);
+  ripple.resources = {};
+  ripple.link      = link(ripple);
   ripple.register  = ripple;
   ripple.types     = types();
-  return emitterify(ripple)
+  return linkify(emitterify(ripple), aliases)
 
   function ripple(name, body, headers){
     return !name                                            ? ripple
@@ -461,9 +489,9 @@ module.exports = function core(){
          : is_1.obj(name) && !name.name                       ? ripple(values(name))
          : is_1.fn(name)  &&  name.resources                  ? ripple(values(name.resources))
          : is_1.str(name) && !body &&  ripple.resources[name] ? ripple.resources[name].body
-         : is_1.str(name) && !body && !ripple.resources[name] ? undefined //register(ripple)({ name })
+         : is_1.str(name) && !body && !ripple.resources[name] ? undefined
          : is_1.str(name) &&  body                            ? register(ripple)({ name: name, body: body, headers: headers })
-         : is_1.obj(name) && !is_1.arr(name)                    ? register(ripple)(name)
+         : is_1.obj(name)                                     ? register(ripple)(name)
          : (err$$1('could not find or create resource', name), false)
   }
 };
@@ -473,8 +501,9 @@ var register = function (ripple) { return function (ref) {
   var body = ref.body;
   var headers = ref.headers; if ( headers === void 0 ) headers = {};
 
-  log$$1('registering', name);
+  name = ripple.aliases.src[name] || name;
   if (is_1.promise(body)) { return body.then(function (body) { return register(ripple)({ name: name, body: body, headers: headers }); }).catch(err$$1) }
+  log$$1('registering', name);
   var res = normalise(ripple)({ name: name, body: body, headers: headers });
 
   if (!res) { return err$$1('failed to register', name), false }
@@ -484,6 +513,7 @@ var register = function (ripple) { return function (ref) {
   , value: res.body
   , time: now(res)
   }]);
+
   return ripple.resources[name].body
 }; };
 
@@ -503,8 +533,20 @@ var contentType = function (res) { return function (type) { return type.check(re
 
 var types = function () { return [text].reduce(to.obj('header'), 1); };
 
-var chainable = function (fn) { return function() {
-  return fn.apply(this, arguments), fn
+var linkify = function (ripple, aliases) {
+  ripple.aliases = { dst: {}, src: {} };
+  for (var name in aliases)
+    { ripple.link(aliases[name], name); }
+  return ripple
+};
+
+var link = function (ripple) { return function (from, to$$1) {
+  ripple.aliases.src[from] = to$$1;
+  ripple.aliases.dst[to$$1] = from;
+  Object.defineProperty(ripple.resources, from, { 
+    get: function get(){ return ripple.resources[to$$1] } 
+  , set: function set(value){ ripple.resources[to$$1] = value; } 
+  });
 }; };
 
 var err$$1 = err('[ri/core]')
