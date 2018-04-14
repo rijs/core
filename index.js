@@ -36,7 +36,7 @@ module.exports = function core({ aliases = {} } = {}){
 const register = ripple => ({ name, body, headers = {} }) => {
   name = ripple.aliases.src[name] || name
   if (is.promise(body)) return body.then(body => register(ripple)({ name, body, headers })).catch(err)
-  log('registering', name)
+  deb('registering', name)
   const res = normalise(ripple)({ name, body, headers })
 
   if (!res) return err('failed to register', name), false
@@ -94,4 +94,5 @@ const emitterify = require('utilise/emitterify')
     , text       = require('./types/text')
     , err = require('utilise/err')('[ri/core]')
     , log = require('utilise/log')('[ri/core]')
+    , deb = require('utilise/deb')('[ri/core]')
     , now = (d, t) => (t = key('body.log.length')(d), is.num(t) ? t - 1 : t)
