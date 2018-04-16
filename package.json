@@ -1,6 +1,6 @@
 {
   "name": "rijs.core",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "main": "index",
   "author": "Pedram Emrouznejad (https://github.com/pemrouz)",
   "description": "Ripple Core",
