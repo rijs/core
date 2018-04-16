@@ -454,6 +454,42 @@ var core = (function () {
 	  }
 	};
 
+	var split = function split(delimiter){
+	  return function(d){
+	    return d.split(delimiter)
+	  }
+	};
+
+	var DEBUG = strip((client ? (owner.location.search.match(/debug=(.*?)(&|$)/) || [])[1] : key('process.env.DEBUG')(owner)) || '')
+	  , whitelist = DEBUG.split(',').map(split('/'));
+
+	var deb = function deb(ns){
+	  return DEBUG == '*' || whitelist.some(matches(ns)) ? out : identity
+
+	  function out(d){
+	    if (!owner.console || !console.log.apply) { return d; }
+	    is_1.arr(arguments[2]) && (arguments[2] = arguments[2].length);
+	    var args = to.arr(arguments)
+	      , prefix = '[deb][' + (new Date()).toISOString() + ']' + ns;
+
+	    args.unshift(prefix.grey ? prefix.grey : prefix);
+	    return console.log.apply(console, args), d
+	  }
+	};
+
+	function matches(ns) {
+	  ns = strip(ns).split('/');
+	  return function(arr){
+	    return arr.length == 1 ? arr[0] == ns[0]
+	         : arr.length == 2 ? arr[0] == ns[0] && arr[1] == ns[1]
+	                           : false 
+	  }
+	}
+
+	function strip(str) {
+	  return str.replace(/(\[|\])/g, '')
+	}
+
 	var core = createCommonjsModule(function (module) {
 	// -------------------------------------------
 	// API: Gets or sets a resource
@@ -500,7 +536,7 @@ var core = (function () {
 
 	  name = ripple.aliases.src[name] || name;
 	  if (is_1.promise(body)) { return body.then(function (body) { return register(ripple)({ name: name, body: body, headers: headers }); }).catch(err$$1) }
-	  log$$1('registering', name);
+	  deb$$1('registering', name);
 	  var res = normalise(ripple)({ name: name, body: body, headers: headers });
 
 	  if (!res) { return err$$1('failed to register', name), false }
@@ -548,6 +584,7 @@ var core = (function () {
 
 	var err$$1 = err('[ri/core]')
 	    , log$$1 = log('[ri/core]')
+	    , deb$$1 = deb('[ri/core]')
 	    , now = function (d, t) { return (t = key('body.log.length')(d), is_1.num(t) ? t - 1 : t); };
 	});
 
