@@ -23,7 +23,7 @@
   },
   "license": "pemrouz.mit-license.org",
   "devDependencies": {
-    "rollup": "^0.58.0",
+    "rollup": "^0.58.1",
     "rollup-plugin-buble": "^0.16.0",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
@@ -32,6 +32,6 @@
   },
   "dependencies": {
     "colors": "^1.1.0",
-    "utilise": "^2.3.3"
+    "utilise": "^2.3.5"
   }
 }
