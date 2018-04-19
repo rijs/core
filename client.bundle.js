@@ -189,7 +189,8 @@ var core = (function () {
 	    };
 
 	    o.until = function(stop){
-	      return stop.each ? stop.each(o.stop) // TODO: check clean up on stop too
+	      return !stop     ? 0
+	           : stop.each ? stop.each(o.stop) // TODO: check clean up on stop too
 	           : stop.then ? stop.then(o.stop)
 	           : stop.call ? o.filter(stop).map(o.stop)
 	                       : 0
@@ -199,7 +200,8 @@ var core = (function () {
 	      return remove(o.li, fn), o
 	    };
 
-	    o.start = function(){
+	    o.start = function(stop){
+	      o.until(stop);
 	      o.source.emit('start');
 	      return o
 	    };
