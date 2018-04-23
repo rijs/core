@@ -74,11 +74,13 @@ const linkify = (ripple, aliases) => {
 }
 
 const link = ripple => (from, to) => {
+  if (from in ripple.resources && to == ripple.aliases.src[from]) return
   ripple.aliases.src[from] = to
   ripple.aliases.dst[to] = from
   Object.defineProperty(ripple.resources, from, { 
     get(){ return ripple.resources[to] } 
   , set(value){ ripple.resources[to] = value } 
+  , configurable: true
   })
 }
 
