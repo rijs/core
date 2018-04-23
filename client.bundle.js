@@ -390,7 +390,7 @@ var core = (function () {
 
 	var wrap$2 = ( wrap$1 && wrap ) || wrap$1;
 
-	var dir = ( keys$1 && keys ) || keys$1;
+	var keys$2 = ( keys$1 && keys ) || keys$1;
 
 	var str$2 = ( str$1 && str ) || str$1;
 
@@ -420,8 +420,8 @@ var core = (function () {
 	    }
 
 	    function replace(o, v) {
-	      dir(o).map(function(k){ delete o[k]; });
-	      dir(v).map(function(k){ o[k] = v[k]; });
+	      keys$2(o).map(function(k){ delete o[k]; });
+	      keys$2(v).map(function(k){ o[k] = v[k]; });
 	      return o
 	    }
 	  }
@@ -480,7 +480,7 @@ var core = (function () {
 	var from$2 = ( from$1 && from_1 ) || from$1;
 
 	var values = function values(o) {
-	  return !o ? [] : dir(o).map(from$2(o))
+	  return !o ? [] : keys$2(o).map(from$2(o))
 	};
 
 	var values$1 = /*#__PURE__*/Object.freeze({
@@ -765,11 +765,13 @@ var core = (function () {
 	};
 
 	var link = function (ripple) { return function (from, to) {
+	  if (from in ripple.resources && to == ripple.aliases.src[from]) { return }
 	  ripple.aliases.src[from] = to;
 	  ripple.aliases.dst[to] = from;
 	  Object.defineProperty(ripple.resources, from, { 
 	    get: function get(){ return ripple.resources[to] } 
 	  , set: function set(value){ ripple.resources[to] = value; } 
+	  , configurable: true
 	  });
 	}; };
 
